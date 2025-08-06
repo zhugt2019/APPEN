@@ -156,7 +156,7 @@ We are committed to evolving APPEN into a comprehensive language learning toolki
 
 ## 📜 License
 
-Distributed under the Apache License. See `LICENSE` for more information.
+Distributed under the Apache-2.0 License. See `LICENSE` for more information.
 
 <br>
 
