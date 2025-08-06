@@ -10,7 +10,7 @@
 ---
 <br>
 
-***Easy to use, packed with features***
+## 💎 Easy to use, packed with features
 ![APPEN Screenshot](appen-screenshot.png)
 
 <br>
