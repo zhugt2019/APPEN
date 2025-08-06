@@ -10,8 +10,7 @@
 ---
 <br>
 
-[![App Screenshot Placeholder](https://placehold.co/800x600/1E88E5/FFFFFF?text=App+Screenshot+Here)
-](https://github.com/zhugt2019/APPEN/blob/main/appen-screenshot.png)
+![APPEN Interface](appen-screenshot.png)
 
 <br>
 
