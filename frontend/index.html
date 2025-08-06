@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#1E88E5">
+    <meta name="description" content="Practice Swedish conversations with AI">
+    
+    <title>APPEN - Swedish Practice</title>
+    
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/main.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Apple Touch Icon -->
+    <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content container">
+                <h1>Svenska AI</h1>
+                <button id="menuBtn" class="btn btn-icon btn-ghost" data-action="toggle-menu" aria-label="Menu">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="container">
+                <!-- CEFR Level Selection -->
+                <section class="card mb-3" style="padding: var(--spacing-md);">
+                    <div class="level-selector-compact">
+                        <button class="level-button" data-action="select-level" data-level="A1">
+                            <h3>A1</h3>
+                            <p class="text-secondary">Beginner</p>
+                        </button>
+                        <button class="level-button active" data-action="select-level" data-level="A2">
+                            <h3>A2</h3>
+                            <p class="text-secondary">Elementary</p>
+                        </button>
+                        <button class="level-button" data-action="select-level" data-level="B1">
+                            <h3>B1</h3>
+                            <p class="text-secondary">Intermediate</p>
+                        </button>
+                        <button class="level-button" data-action="select-level" data-level="B2">
+                            <h3>B2</h3>
+                            <p class="text-secondary">Upper-Int</p>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Scenario Section -->
+                <section class="card scenario-card mb-3">
+                    <div class="scenario-content">
+                        <div id="scenarioText" class="scenario-text mb-3">
+                            <div class="skeleton" style="height: 20px; margin-bottom: 8px;"></div>
+                            <div class="skeleton" style="height: 20px; width: 80%;"></div>
+                        </div>
+                        <div class="scenario-actions flex">
+                            <button id="randomScenarioBtn" class="btn btn-secondary" data-action="generate-random-scenario">
+                                <span>Random</span>
+                            </button>
+                            <button id="customScenarioBtn" class="btn btn-secondary" data-action="show-custom-scenario">
+                                <span>Custom</span>
+                            </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Example Dialog Button -->
+                <section class="card p-2 mb-3">
+                    <button id="exampleDialogBtn" class="btn btn-outline btn-block" data-action="show-example-dialog">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z"></path>
+                            <path d="M2 17L12 22L22 17"></path>
+                            <path d="M2 12L12 17L22 12"></path>
+                        </svg>
+                        <span>View Example Dialogue</span>
+                    </button>
+                </section>
+
+                <!-- Chat Container -->
+                <section id="chatContainer" class="chat-container">
+                    <!-- Messages will be dynamically inserted here by app.js -->
+                </section>
+            </div>
+        </main>
+
+        <!-- Recording Interface -->
+        <div id="recordingInterface" class="recording-interface">
+            <div class="recording-status text-center mb-2">
+                <span id="recordingStatusText">Tap and hold to speak</span>
+                <span id="recordingTime" class="recording-time hidden">0:00</span>
+            </div>
+            
+            <div id="audioVisualizer" class="audio-visualizer hidden">
+                <!-- Audio bars will be dynamically generated by JavaScript -->
+            </div>
+            
+            <div class="record-button-container flex-center mb-3">
+                <button id="recordButton" class="record-button">
+                    <div class="record-icon"></div>
+                </button>
+            </div>
+            
+            <p class="text-center text-secondary">
+                Release to send your message
+            </p>
+        </div>
+
+        <!-- Floating Action Button -->
+        <button id="fabRecord" class="fab" data-action="show-recording" aria-label="Start recording">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                <line x1="12" y1="19" x2="12" y2="23"></line>
+                <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+        </button>
+
+        <!-- Permission Modal -->
+        <div id="permissionModal" class="modal-overlay">
+            <div class="modal">
+                <h2>Microphone Access Required</h2>
+                <p>This app needs microphone access to hear your Swedish practice. Your audio is only used for language learning and is not stored.</p>
+                <div class="modal-actions">
+                    <button id="permissionLaterBtn" class="btn btn-outline" data-action="close-modal" data-modal="permissionModal">Not Now</button>
+                    <button id="enableMicrophoneBtn" class="btn btn-primary" data-action="enable-microphone">Enable Microphone</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Scenario Modal -->
+        <div id="customScenarioModal" class="modal-overlay">
+            <div class="modal">
+                <h2>Create Custom Scenario</h2>
+                <p>Describe a situation you'd like to practice (in any language):</p>
+                <div class="form-group">
+                    <input type="text" 
+                           id="customScenarioInput" 
+                           class="form-input" 
+                           placeholder="e.g., ordering coffee at a café"
+                           maxlength="100">
+                </div>
+                <div class="modal-actions">
+                    <button id="customScenarioCancel" class="btn btn-outline" data-action="close-modal" data-modal="customScenarioModal">Cancel</button>
+                    <button id="customScenarioGenerate" class="btn btn-primary" data-action="generate-custom-scenario">Generate</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toast Container -->
+        <div id="toast" class="toast"></div>
+    </div>
+
+    <!-- This section contains CSS styles that are critical for the layout and animations. -->
+    <style>
+        /* Compact Level Selector */
+        .level-selector-compact { display: flex; gap: var(--spacing-sm); justify-content: center; align-items: center; }
+        .level-selector-compact .level-button { padding: var(--spacing-xs) var(--spacing-md); min-width: 60px; flex: 1; }
+        .level-selector-compact .level-button h3 { font-size: var(--font-size-base); margin: 0; }
+        .level-selector-compact .level-button p { display: none; }
+        
+        /* App Layout: Critical for preventing full-page scroll on mobile */
+        .app-container { height: 100vh; overflow: hidden; display: flex; flex-direction: column; padding-top: var(--safe-area-inset-top); }
+        .header { background-color: var(--surface); box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: var(--z-sticky); flex-shrink: 0; }
+        .header-content { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md) 0; }
+        .header h1 { font-size: var(--font-size-2xl); color: var(--primary-color); margin: 0; }
+        .main-content { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: var(--spacing-md) 0; }
+
+        /* Level Selector Buttons */
+        .level-selector { gap: var(--spacing-sm); }
+        .level-button { padding: var(--spacing-md); border: 2px solid var(--border-color); border-radius: var(--border-radius); background: var(--surface); cursor: pointer; transition: all var(--transition-base); text-align: center; }
+        .level-button:hover { border-color: var(--primary-color); transform: translateY(-2px); }
+        .level-button.active { border-color: var(--primary-color); background-color: rgba(30, 136, 229, 0.1); }
+        .level-button h3 { margin: 0 0 var(--spacing-xs) 0; color: var(--text-primary); }
+        .level-button p { margin: 0; font-size: var(--font-size-sm); }
+
+        /* Scenario Card */
+        .scenario-card { background: linear-gradient(135deg, var(--primary-color), var(--primary-dark)); color: white; position: relative; overflow: hidden; }
+        .scenario-card::before { content: ''; position: absolute; top: -50%; right: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%); animation: pulse 3s ease-in-out infinite; }
+        @keyframes pulse { 0%, 100% { transform: scale(0.8); opacity: 0.5; } 50% { transform: scale(1.2); opacity: 0.8; } }
+        .scenario-content { position: relative; z-index: 1; }
+        .scenario-text { font-size: var(--font-size-base); line-height: 1.6; min-height: 60px; }
+        .scenario-actions { gap: var(--spacing-sm); }
+        .scenario-actions .btn { flex: 1; }
+
+        /* Chat Messages: Critical for scrollable chat area */
+        .chat-container { display: flex; flex-direction: column; gap: var(--spacing-md); flex: 1; overflow-y: auto; padding-bottom: calc(100px + var(--safe-area-inset-bottom)); }
+        .message { display: flex; gap: var(--spacing-sm); }
+        .message-avatar { width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: var(--font-size-sm); flex-shrink: 0; }
+        .message.user .message-avatar { background-color: var(--primary-color); color: white; }
+        .message.ai .message-avatar { background-color: var(--secondary-color); color: var(--text-primary); }
+        .message-content { flex: 1; }
+        .message-bubble { background: var(--surface); padding: var(--spacing-sm) var(--spacing-md); border-radius: 18px; box-shadow: var(--shadow-sm); display: inline-block; }
+        .message.user .message-bubble { background-color: var(--primary-color); color: white; margin-left: 40px; }
+        .message-text { font-size: var(--font-size-base); line-height: 1.4; }
+        .message-audio { margin-top: var(--spacing-sm); }
+        .audio-player { width: 100%; height: 32px; outline: none; }
+
+        /* Recording Interface */
+        .recording-interface { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); box-shadow: 0 -4px 12px rgba(0,0,0,0.1); padding: var(--spacing-md); padding-bottom: calc(var(--spacing-md) + var(--safe-area-inset-bottom)); z-index: var(--z-fixed); transform: translateY(100%); transition: transform var(--transition-base) ease-out; }
+        .recording-interface.active { transform: translateY(0); }
+        .record-button { width: 80px; height: 80px; border-radius: 50%; background: var(--error-color); border: none; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition-base); position: relative; box-shadow: var(--shadow-md); }
+        .record-button:active { transform: scale(0.9); }
+        .record-button.recording { animation: recordPulse 1.5s ease-in-out infinite; }
+        @keyframes recordPulse { 0% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0.7); } 70% { box-shadow: 0 0 0 20px rgba(244, 67, 54, 0); } 100% { box-shadow: 0 0 0 0 rgba(244, 67, 54, 0); } }
+        .record-icon { width: 32px; height: 32px; background: white; border-radius: 50%; transition: border-radius var(--transition-base); }
+        .record-button.recording .record-icon { border-radius: 4px; width: 24px; height: 24px; }
+        .recording-time { font-weight: 600; color: var(--error-color); margin-left: var(--spacing-sm); }
+        .audio-visualizer { height: 40px; display: flex; align-items: center; justify-content: center; gap: 2px; margin-bottom: var(--spacing-md); }
+        .audio-bar { width: 3px; background: var(--primary-color); border-radius: 2px; transition: height 0.1s; }
+
+        /* Modal Styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: var(--z-modal-backdrop); opacity: 0; visibility: hidden; transition: opacity var(--transition-base), visibility var(--transition-base); padding: var(--spacing-lg); }
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+        .modal { background: var(--surface); border-radius: var(--border-radius); padding: var(--spacing-lg); max-width: 400px; width: 100%; box-shadow: var(--shadow-lg); transform: scale(0.9); transition: transform var(--transition-base); z-index: var(--z-modal); }
+        .modal-overlay.active .modal { transform: scale(1); }
+        .modal h2 { margin-bottom: var(--spacing-md); }
+        .modal p { margin-bottom: var(--spacing-lg); line-height: 1.5; }
+        .modal-actions { display: flex; gap: var(--spacing-sm); justify-content: flex-end; }
+
+        /* Floating Action Button */
+        .fab { position: fixed; bottom: calc(var(--spacing-lg) + var(--safe-area-inset-bottom)); right: var(--spacing-lg); width: 56px; height: 56px; border-radius: 50%; background: var(--primary-color); color: white; border: none; box-shadow: var(--shadow-md); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition-base); z-index: var(--z-fixed); }
+        .fab:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+        .fab:active { transform: scale(0.9); }
+
+        /* Toast Notifications */
+        .toast { position: fixed; bottom: calc(120px + var(--safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(100px); background: #323232; color: white; padding: var(--spacing-sm) var(--spacing-lg); border-radius: var(--border-radius-pill); font-size: var(--font-size-sm); opacity: 0; transition: all var(--transition-base); z-index: var(--z-tooltip); white-space: nowrap; max-width: calc(100vw - 48px); }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    </style>
+
+    <!-- JavaScript Modules -->
+    <script type="module">
+        // Initialize audio visualizer bars once the DOM is loaded.
+        document.addEventListener('DOMContentLoaded', () => {
+            const visualizer = document.getElementById('audioVisualizer');
+            if (visualizer) {
+                for (let i = 0; i < 20; i++) {
+                    const bar = document.createElement('div');
+                    bar.className = 'audio-bar';
+                    bar.style.height = '4px';
+                    visualizer.appendChild(bar);
+                }
+            }
+        });
+    </script>
+    
+    <!-- Main Application Script -->
+    <script type="module" src="js/app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js')
+                    .then(registration => console.log('ServiceWorker registered successfully.'))
+                    .catch(error => console.log('ServiceWorker registration failed:', error));
+            });
+        }
+    </script>
+
+    <!-- On-screen Debug Console -->
+    <script>
+    (function () {
+        // 1. Create styles for the console.
+        const styles = `
+            #debug-console-container { position: fixed; bottom: 10px; right: 10px; width: 90%; max-width: 500px; max-height: 40vh; display: flex; flex-direction: column; background-color: rgba(0, 0, 0, 0.85); border: 1px solid #888; border-radius: 5px; z-index: 99998; box-shadow: 0 0 10px rgba(0,0,0,0.5); visibility: hidden; opacity: 0; transform: translateY(20px); transition: opacity 0.2s, transform 0.2s; }
+            #debug-console-container.visible { visibility: visible; opacity: 1; transform: translateY(0); }
+            .debug-log-display { padding: 8px; overflow-y: scroll; flex-grow: 1; color: #0f0; font-family: monospace; font-size: 11px; }
+            .debug-log-display pre { margin: 0; padding: 3px 0; border-bottom: 1px solid #444; white-space: pre-wrap; word-break: break-all; }
+            #debug-toggle-button { position: fixed; bottom: 10px; right: 10px; padding: 6px 10px; background-color: #d9534f; color: white; border: none; border-radius: 5px; cursor: pointer; z-index: 99999; font-size: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.4); }
+        `;
+        const styleSheet = document.createElement("style");
+        styleSheet.type = "text/css";
+        styleSheet.innerText = styles;
+        document.head.appendChild(styleSheet);
+
+        // 2. Create the HTML structure for the console.
+        const container = document.createElement('div');
+        container.id = 'debug-console-container';
+        const logDisplay = document.createElement('div');
+        logDisplay.className = 'debug-log-display';
+        container.appendChild(logDisplay);
+        document.body.appendChild(container);
+
+        const toggleButton = document.createElement('button');
+        toggleButton.id = 'debug-toggle-button';
+        toggleButton.textContent = 'Show Console';
+        document.body.appendChild(toggleButton);
+
+        // 3. Add toggle functionality.
+        toggleButton.addEventListener('click', () => {
+            container.classList.toggle('visible');
+            toggleButton.textContent = container.classList.contains('visible') ? 'Hide Console' : 'Show Console';
+        });
+
+        // 4. Override console methods and handle global errors.
+        const originalConsole = { log: console.log, error: console.error, warn: console.warn, info: console.info };
+        const formatMessage = (args) => Array.from(args).map(arg => typeof arg === 'object' && arg !== null ? JSON.stringify(arg, null, 2) : String(arg)).join(' ');
+        const createLogEntry = (message, level) => {
+            const entry = document.createElement('pre');
+            entry.textContent = `[${level}] ${message}`;
+            if (level === 'ERROR') entry.style.color = '#ff4d4d';
+            if (level === 'WARN') entry.style.color = '#ffcc00';
+            logDisplay.appendChild(entry);
+            logDisplay.scrollTop = logDisplay.scrollHeight;
+        };
+
+        console.log = function(...args) { createLogEntry(formatMessage(args), 'LOG'); originalConsole.log.apply(console, args); };
+        console.error = function(...args) { createLogEntry(formatMessage(args), 'ERROR'); originalConsole.error.apply(console, args); };
+        console.warn = function(...args) { createLogEntry(formatMessage(args), 'WARN'); originalConsole.warn.apply(console, args); };
+        console.info = function(...args) { createLogEntry(formatMessage(args), 'INFO'); originalConsole.info.apply(console, args); };
+
+        const handleError = (message, error) => {
+            const stack = error && error.stack ? `\nStack: ${error.stack}` : '';
+            createLogEntry(`${message}${stack}`, 'ERROR');
+        };
+        
+        window.onerror = (message, source, lineno, colno, error) => {
+            handleError(`Uncaught: ${message} at ${source.split('/').pop()}:${lineno}`, error);
+            return false; // Let the default handler run as well.
+        };
+        
+        window.addEventListener('unhandledrejection', event => {
+            handleError(`Promise Rejection: ${event.reason}`, event.reason instanceof Error ? event.reason : null);
+        });
+
+        console.info('Toggleable on-screen debug console initialized.');
+    })();
+    </script>
+</body>
+</html>

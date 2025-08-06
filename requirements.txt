@@ -1,0 +1,112 @@
+# requirements.txt - Discute项目完整依赖
+
+# ===== 核心依赖 =====
+
+# FastAPI Web框架
+fastapi
+uvicorn[standard]
+python-multipart
+aiofiles
+
+# 数据验证
+pydantic
+pydantic-settings
+
+# ===== 音频处理 =====
+
+# PyDub音频处理（需要ffmpeg）
+pydub
+
+# 音频格式支持
+soundfile
+scipy
+numpy
+
+# ===== AI模型 =====
+openai
+
+# PyTorch（用于Whisper和TTS）
+torch==2.7.1+cu126
+torchaudio==2.7.1+cu126
+
+# Hugging Face Transformers
+transformers
+datasets
+accelerate
+
+# ===== Streamlit（桌面版） =====
+streamlit
+
+# ===== 网络请求 =====
+requests
+httpx
+aiohttp
+
+# ===== 工具和实用程序 =====
+
+# 环境变量管理
+python-dotenv
+
+# 日志
+python-json-logger
+
+# 时间处理
+python-dateutil
+pytz
+
+# ===== 开发依赖 =====
+
+# 测试
+pytest
+pytest-asyncio
+pytest-cov
+
+# 代码质量
+black
+flake8
+mypy
+isort
+
+# ===== 生产部署 =====
+
+# ASGI服务器
+gunicorn
+
+# 进程管理
+supervisor
+
+# HuggingFace
+hf_xet
+
+# ===== 可选依赖 =====
+
+# 缓存（如果使用Redis）
+# redis
+# hiredis
+
+# 数据库（如果需要持久化）
+# sqlalchemy
+# alembic
+# asyncpg
+# aiosqlite
+
+# 监控和分析
+# prometheus-client
+# sentry-sdk[fastapi]
+
+# 任务队列（如果需要后台任务）
+# celery
+# redis
+
+# ===== 系统依赖说明 =====
+#
+# 需要安装的系统包（Ubuntu/Debian）：
+# sudo apt-get update
+# sudo apt-get install -y ffmpeg libsndfile1 python3-dev
+#
+# macOS (使用Homebrew)：
+# brew install ffmpeg libsndfile
+#
+# Windows：
+# 下载并安装ffmpeg: https://ffmpeg.org/download.html
+# 添加到系统PATH环境变量

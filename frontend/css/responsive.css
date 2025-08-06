@@ -1,0 +1,337 @@
+/* frontend/css/responsive.css */
+
+/* Mobile First Approach - Base styles are for mobile */
+
+/* Small devices (landscape phones, 576px and up) */
+@media (min-width: 576px) {
+    .container {
+        max-width: 540px;
+    }
+    
+    .card {
+        padding: var(--spacing-xl);
+    }
+    
+    .grid-sm-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* Medium devices (tablets, 768px and up) */
+@media (min-width: 768px) {
+    :root {
+        --font-size-base: 18px;
+    }
+    
+    .container {
+        max-width: 720px;
+    }
+    
+    .hide-md {
+        display: none;
+    }
+    
+    .show-md {
+        display: block;
+    }
+    
+    .grid-md-2 {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .grid-md-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    /* Tablet-specific adjustments */
+    .btn {
+        padding: var(--spacing-md) var(--spacing-xl);
+    }
+    
+    .form-input,
+    .form-textarea,
+    .form-select {
+        padding: var(--spacing-md) var(--spacing-lg);
+    }
+}
+
+/* Large devices (desktops, 992px and up) */
+@media (min-width: 992px) {
+    .container {
+        max-width: 960px;
+    }
+    
+    .hide-lg {
+        display: none;
+    }
+    
+    .show-lg {
+        display: block;
+    }
+    
+    .grid-lg-3 {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .grid-lg-4 {
+        grid-template-columns: repeat(4, 1fr);
+    }
+}
+
+/* Extra large devices (large desktops, 1200px and up) */
+@media (min-width: 1200px) {
+    .container {
+        max-width: 1140px;
+    }
+}
+
+/* Portrait orientation specific styles */
+@media (orientation: portrait) {
+    /* Optimize for one-handed use */
+    .bottom-actions {
+        padding-bottom: calc(var(--spacing-lg) + var(--safe-area-inset-bottom));
+    }
+    
+    .fab {
+        bottom: calc(100px + var(--safe-area-inset-bottom));
+    }
+}
+
+/* Landscape orientation specific styles */
+@media (orientation: landscape) {
+    /* Reduce vertical spacing in landscape */
+    .header {
+        padding: var(--spacing-sm) var(--spacing-md);
+    }
+    
+    .card {
+        padding: var(--spacing-md);
+    }
+    
+    /* Side-by-side layout for chat in landscape */
+    @media (min-width: 768px) {
+        .chat-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: var(--spacing-md);
+        }
+    }
+}
+
+/* Touch device specific styles */
+@media (hover: none) and (pointer: coarse) {
+    /* Increase touch targets */
+    .btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+    
+    .form-input,
+    .form-textarea,
+    .form-select {
+        min-height: 44px;
+    }
+    
+    /* Remove hover effects on touch devices */
+    .btn:hover {
+        background-color: inherit;
+    }
+    
+    /* Improve touch feedback */
+    .btn:active {
+        transform: scale(0.95);
+    }
+}
+
+/* High DPI screens */
+@media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+    /* Use higher resolution images */
+    .logo {
+        background-image: url('../assets/logo@2x.png');
+    }
+}
+
+/* iOS specific adjustments */
+@supports (-webkit-touch-callout: none) {
+    /* iOS elastic scroll */
+    .scrollable {
+        -webkit-overflow-scrolling: touch;
+    }
+    
+    /* Fix iOS form zoom */
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    textarea {
+        font-size: 16px;
+    }
+    
+    /* iOS safe areas */
+    .app-container {
+        padding-top: var(--safe-area-inset-top);
+        padding-left: var(--safe-area-inset-left);
+        padding-right: var(--safe-area-inset-right);
+    }
+}
+
+/* Android specific adjustments */
+@media (hover: none) and (pointer: coarse) and (min-width: 320px) {
+    /* Android keyboard adjustments */
+    .recording-interface.keyboard-open {
+        position: absolute;
+        bottom: 0;
+    }
+}
+
+/* Small phone adjustments (iPhone SE, etc.) */
+@media (max-width: 375px) {
+    :root {
+        --font-size-base: 14px;
+        --spacing-md: 12px;
+        --spacing-lg: 20px;
+    }
+    
+    .header h1 {
+        font-size: var(--font-size-xl);
+    }
+    
+    .btn {
+        padding: var(--spacing-sm) var(--spacing-md);
+        font-size: var(--font-size-sm);
+    }
+    
+    .card {
+        padding: var(--spacing-md);
+    }
+    
+    .level-selector {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--spacing-sm);
+    }
+    
+    .record-button {
+        width: 70px;
+        height: 70px;
+    }
+}
+
+/* Foldable phone support */
+@media (min-width: 320px) and (max-width: 853px) and (orientation: portrait) {
+    /* Samsung Galaxy Fold closed */
+    .container {
+        padding: 0 var(--spacing-sm);
+    }
+}
+
+@media (min-width: 717px) and (max-width: 853px) and (orientation: landscape) {
+    /* Samsung Galaxy Fold open */
+    .app-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Accessibility - Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* Print styles */
+@media print {
+    /* Hide unnecessary elements */
+    .header,
+    .fab,
+    .recording-interface,
+    .btn,
+    .audio-player {
+        display: none !important;
+    }
+    
+    /* Optimize for printing */
+    body {
+        background: white;
+        color: black;
+    }
+    
+    .card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+        page-break-inside: avoid;
+    }
+    
+    .message {
+        page-break-inside: avoid;
+    }
+    
+    /* Show URLs for links */
+    a[href]::after {
+        content: " (" attr(href) ")";
+    }
+}
+
+/* Custom scrollbar for webkit browsers */
+@media (min-width: 768px) {
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: var(--background);
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: var(--border-color);
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: var(--text-secondary);
+    }
+}
+
+/* Notch and status bar handling */
+@supports (padding-top: constant(safe-area-inset-top)) {
+    .app-container {
+        padding-top: constant(safe-area-inset-top);
+    }
+}
+
+@supports (padding-top: env(safe-area-inset-top)) {
+    .app-container {
+        padding-top: env(safe-area-inset-top);
+    }
+}
+
+/* Specific device fixes */
+
+/* iPhone X and later */
+@media only screen 
+    and (device-width: 375px) 
+    and (device-height: 812px) 
+    and (-webkit-device-pixel-ratio: 3) {
+    .recording-interface {
+        padding-bottom: calc(var(--spacing-md) + 34px); /* Account for home indicator */
+    }
+}
+
+/* iPad Pro */
+@media only screen 
+    and (min-device-width: 1024px) 
+    and (max-device-width: 1366px) 
+    and (-webkit-min-device-pixel-ratio: 2) {
+    .container {
+        max-width: 768px;
+    }
+    
+    .chat-container {
+        padding: var(--spacing-xl);
+    }
+}
