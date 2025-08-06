@@ -83,13 +83,20 @@ To get a local copy up and running, follow these simple steps.
     **Method B: Use System Environment Variables**
     Alternatively, you can set these as system-wide environment variables. The application will automatically detect them. This is common for production deployments.
 
-4.  **Run the Application:**
+4.  **Set up ngrok (if you want to create a public URL):**
+    * [Sign up for a free ngrok account](https://dashboard.ngrok.com/signup) to get your authtoken.
+    * Install ngrok on your system if you haven't already.
+    * Configure your authtoken by running the command provided on your ngrok dashboard:
+    ```sh
+    ngrok config add-authtoken YOUR_NGROK_AUTHTOKEN
+
+5.  **Run the Application:**
     You will need two terminal windows open.
 
     **In your first terminal (from the `backend` directory):**
     Start the main application server.
     ```sh
-    uvicorn api:app --host 0.0.0.0 --port 8000 --reload
+    uvicorn backend.api:app --reload --host 0.0.0.0 --port 8000
     ```
 
     **In your second terminal:**
