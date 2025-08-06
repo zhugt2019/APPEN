@@ -2,10 +2,10 @@
 
 > A modern web application designed for Swedish learners to break through the speaking barrier and build confidence. **Practice real-time, scenario-based conversations with an interactive partner, get instant feedback with speech recognition, and learn pronunciation from lifelike audio synthesis. As a web app, it works seamlessly across all your devices, including iOS, Android, and desktop computers.**
 
-[![Build Status](https://imgshields.io/badge/build-passing-brightgreen)](https://github.com)
-[![License](https://imgshields.io/badge/license-MIT-blue)](https://opensource.org/licenses/MIT)
-[![Python Version](https://imgshields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
-[![Framework](https://imgshields.io/badge/framework-FastAPI-green)](https://fastapi.tiangolo.com/)
+[![Build Status](https://img.shields.io/badge/build-passing-brightgreen)](https://github.com)
+[![License](https://img.shields.io/badge/license-MIT-blue)](https://opensource.org/licenses/MIT)
+[![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Framework](https://img.shields.io/badge/framework-FastAPI-green)](https://fastapi.tiangolo.com/)
 
 ---
 
@@ -65,15 +65,15 @@ To get a local copy up and running, follow these simple steps.
 ### Prerequisites
 
 * **Anaconda** or **Miniconda**
-* Python 3.8 or higher
+* Python 3.10 or higher
 * `git` for cloning the repository
 
 ### Installation & Setup
 
 1.  **Clone the repository:**
     ```sh
-    git clone [https://github.com/your-username/your-repository-name.git](https://github.com/your-username/your-repository-name.git)
-    cd your-repository-name
+    git clone [https://github.com/zhugt2019/APPEN.git](https://github.com/zhugt2019/APPEN.git)
+    cd APPEN
     ```
 
 2.  **Set up the Backend Environment with Anaconda:**
@@ -81,8 +81,8 @@ To get a local copy up and running, follow these simple steps.
     # Navigate to the backend directory
     cd backend
 
-    # Create a new conda environment named 'appen' with Python 3.8
-    conda create --name appen python=3.8 -y
+    # Create a new conda environment named 'appen' with Python 3.10
+    conda create --name appen python=3.10 -y
 
     # Activate the new environment
     conda activate appen
@@ -90,15 +90,11 @@ To get a local copy up and running, follow these simple steps.
     # Install the required Python packages
     pip install -r requirements.txt
 
-    # Create a .env file from the example template
-    cp .env.example .env
-    ```
-
 3.  **Configure Environment Variables:**
     The application reads API keys as environment variables. You can set them in one of two ways:
 
     **Method A (Recommended): Use a `.env` file**
-    Open the newly created `backend/.env` file and add your API keys. This method is ideal for local development.
+    Create a `backend/.env` file and add your API keys. This method is ideal for local development.
     ```env
     # backend/.env
     GEMINI_API_KEY="YOUR_GOOGLE_GEMINI_API_KEY"
@@ -126,19 +122,7 @@ To get a local copy up and running, follow these simple steps.
 
 ## 📜 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
-
-## 🤝 Contributing
-
-Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request
+Distributed under the Apache License. See `LICENSE` for more information.
 
 ## 🙏 Acknowledgements
 
