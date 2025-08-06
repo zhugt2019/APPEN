@@ -10,8 +10,13 @@
 ---
 <br>
 
-### Easy to use, packed with features
-![APPEN Interface](appen-screenshot.png)
+<h3 align="center">
+  **Easy to use, packed with features**
+</h3>
+
+<p align="center">
+  <img src="appen-screenshot.png" alt="APPEN Screenshot">
+</p>
 
 <br>
 
