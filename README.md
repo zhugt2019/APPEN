@@ -10,13 +10,8 @@
 ---
 <br>
 
-<h3 align="center">
-  **Easy to use, packed with features**
-</h3>
-
-<p align="center">
-  <img src="appen-screenshot.png" alt="APPEN Screenshot">
-</p>
+***Easy to use, packed with features***
+![APPEN Screenshot](appen-screenshot.png)
 
 <br>
 
