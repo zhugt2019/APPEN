@@ -69,7 +69,22 @@ To get a local copy up and running, follow these simple steps.
     pip install -r requirements.txt
     ```
 
-3.  **Configure Environment Variables:**
+3.  **4. Populate the Dictionary Database**
+    From the project's root directory, run the following command to execute the import:
+    python scripts/import_dictionary.py scripts/dict/folkets_en_sv_public.xml
+    ```
+    
+    Once the script is finished, a database.sqlite3 file will be created or updated in your project root, containing all the dictionary entries.
+
+
+5.  **Set up ngrok (if you want to create a public URL):**
+    * [Sign up for a free ngrok account](https://dashboard.ngrok.com/signup) to get your authtoken.
+    * Install ngrok on your system if you haven't already.
+    * Configure your authtoken by running the command provided on your ngrok dashboard:
+    ```sh
+    ngrok config add-authtoken YOUR_NGROK_AUTHTOKEN
+
+6.  **Set up **
     The application reads API keys as environment variables. You can set them in one of two ways:
 
     **Method A (Recommended): Use a `.env` file**
@@ -80,17 +95,7 @@ To get a local copy up and running, follow these simple steps.
     DEEPSEEK_API_KEY="YOUR_DEEPSEEK_API_KEY"
     ```
 
-    **Method B: Use System Environment Variables**
-    Alternatively, you can set these as system-wide environment variables. The application will automatically detect them. This is common for production deployments.
-
-4.  **Set up ngrok (if you want to create a public URL):**
-    * [Sign up for a free ngrok account](https://dashboard.ngrok.com/signup) to get your authtoken.
-    * Install ngrok on your system if you haven't already.
-    * Configure your authtoken by running the command provided on your ngrok dashboard:
-    ```sh
-    ngrok config add-authtoken YOUR_NGROK_AUTHTOKEN
-
-5.  **Run the Application:**
+7.  **Run the Application:**
     You will need two terminal windows open.
 
     **In your first terminal (from the `backend` directory):**
