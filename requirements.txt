@@ -78,17 +78,18 @@ supervisor
 # HuggingFace
 hf_xet
 
+# JWT认证和密码处理
+PyJWT
+passlib[bcrypt]
+
+# 数据库
+sqlalchemy
+
 # ===== 可选依赖 =====
 
 # 缓存（如果使用Redis）
 # redis
 # hiredis
-
-# 数据库（如果需要持久化）
-# sqlalchemy
-# alembic
-# asyncpg
-# aiosqlite
 
 # 监控和分析
 # prometheus-client

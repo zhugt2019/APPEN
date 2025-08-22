@@ -4,7 +4,7 @@ This module defines all Pydantic models used for API request validation,
 response serialization, and data structures throughout the application.
 """
 
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, ConfigDict, validator
 from typing import List, Optional, Dict, Any, Union
 from datetime import datetime
 from enum import Enum
@@ -146,3 +146,44 @@ def format_dialog_for_display(messages: Union[List[ChatMessage], List[Dict[str, 
         formatted_lines.append(f"{speaker}: {content}")
     
     return '\n'.join(formatted_lines)
+
+# --- User & Authentication Models ---
+
+class UserBase(BaseModel):
+    username: str
+
+class UserCreate(UserBase):
+    password: str
+
+class User(UserBase):
+    id: int
+    model_config = ConfigDict(from_attributes=True)
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+# --- Word Lookup Models ---
+
+class WordSearchResult(BaseModel):
+    word: str = Field(..., alias="swedish_word")
+    word_class: Optional[str] = None
+    definition: str = Field(..., alias="english_def")
+    model_config = ConfigDict(from_attributes=True, populate_by_name=True) # populate_by_name 替代了 allow_population_by_field_name
+
+# --- Wordbook Models ---
+
+class WordbookEntryBase(BaseModel):
+    word: str
+    definition: str
+
+class WordbookEntryCreate(WordbookEntryBase):
+    pass
+
+class WordbookEntry(WordbookEntryBase):
+    id: int
+    user_id: int
+    created_at: datetime
+    
+    class Config:
+        orm_mode = True
