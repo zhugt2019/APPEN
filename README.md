@@ -128,7 +128,7 @@ To get a local copy up and running, follow these simple steps.
 
 | Category    | Technologies & Models                                                                                                                                                             |
 | :---------- | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Backend** | `Python 3.8+`, `FastAPI`, `Uvicorn`, `PyTorch`, `Pydub`<br>**STT Model:** `KBLab/kb-whisper-small`<br>**TTS Model:** `facebook/mms-tts-swe`<br>**LLMs:** `Google Gemini API`, `DeepSeek API` |
+| **Backend** | `Python 3.10+`, `FastAPI`, `Uvicorn`, `PyTorch`, `Pydub`<br>**STT Model:** `KBLab/kb-whisper-small`<br>**TTS Model:** `facebook/mms-tts-swe`<br>**LLMs:** `Google Gemini API`, `DeepSeek API` |
 | **Frontend** | `Vanilla JavaScript (ES6)`, `HTML5`, `CSS3`, `MediaRecorder API`, `Web Audio API`                                                                                                    |
 | **PWA** | `Service Workers`, `Web App Manifest`                                                                                                                                               |
 
