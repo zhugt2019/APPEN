@@ -8,7 +8,7 @@ from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from .database import get_db, User
+from .database import User, get_user_db
 
 # --- Configuration ---
 # It's crucial to keep this secret key secure and not hard-coded in production.
@@ -44,10 +44,10 @@ def get_user(db: Session, username: str) -> Optional[User]:
     """
     return db.query(User).filter(User.username == username).first()
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_user_db)) -> User: # MODIFIED
     """
     Dependency to get the current authenticated user.
-    It decodes the token, validates the username, and fetches the user from the DB.
+    It decodes the token, validates the username, and fetches the user from the user DB.
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

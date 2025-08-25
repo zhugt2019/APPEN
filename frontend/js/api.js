@@ -69,8 +69,9 @@ export class API {
     }
 
     // --- Dictionary & Wordbook Methods ---
-    async searchWord(query) {
-        return this._request(`/api/search?q=${encodeURIComponent(query)}`, {
+    async searchWord(query, page = 1) { // MODIFIED: Added page parameter
+        const params = new URLSearchParams({ q: query, page: page });
+        return this._request(`/api/search?${params.toString()}`, {
             method: 'GET',
             headers: this._getHeaders()
         });

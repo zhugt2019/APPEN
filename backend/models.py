@@ -163,13 +163,28 @@ class Token(BaseModel):
     access_token: str
     token_type: str
 
+# ADDED: Pydantic model for an example sentence
+class Example(BaseModel):
+    swedish_sentence: str
+    english_sentence: str
+    model_config = ConfigDict(from_attributes=True)
+
 # --- Word Lookup Models ---
 
 class WordSearchResult(BaseModel):
-    word: str = Field(..., alias="swedish_word")
+    id: int
+    swedish_word: str
     word_class: Optional[str] = None
-    definition: str = Field(..., alias="english_def")
-    model_config = ConfigDict(from_attributes=True, populate_by_name=True) # populate_by_name 替代了 allow_population_by_field_name
+    english_def: str
+    examples: List[Example] = []
+    model_config = ConfigDict(from_attributes=True)
+
+# ADDED: A wrapper model for paginated responses
+class PaginatedWordSearchResult(BaseModel):
+    total_items: int
+    total_pages: int
+    current_page: int
+    items: List[WordSearchResult]
 
 # --- Wordbook Models ---
 
@@ -187,3 +202,4 @@ class WordbookEntry(WordbookEntryBase):
     
     class Config:
         orm_mode = True
+

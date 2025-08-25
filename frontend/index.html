@@ -60,7 +60,15 @@
 
         <section id="search-section" class="main-content" style="display: none;">
             <div class="container">
-                <div class="card"><h2 class="card-header">Word Lookup</h2><div class="form-group"><input type="search" id="searchInput" class="form-input" placeholder="Search for a Swedish word..."></div><div id="searchResults" class="search-results"></div></div>
+                <div class="card">
+                    <h2 class="card-header">Word Lookup</h2>
+                    <div class="form-group">
+                        <input type="search" id="searchInput" class="form-input" placeholder="Search for a Swedish word...">
+                    </div>
+                    <div id="searchResults" class="search-results"></div>
+                    
+                    <div id="paginationControls" class="pagination-controls"></div>
+                    </div>
             </div>
         </section>
 
@@ -91,7 +99,7 @@
         .header { background-color: var(--surface); box-shadow: var(--shadow-sm); position: sticky; top: 0; z-index: var(--z-sticky); flex-shrink: 0; }
         .header-content { display: flex; align-items: center; justify-content: space-between; padding: var(--spacing-md) 0; }
         .header h1 { font-size: var(--font-size-2xl); color: var(--primary-color); margin: 0; }
-        .main-content { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: var(--spacing-md) 0; }
+        .main-content { flex: 1; display: flex; flex-direction: column; min-height: 0; padding: var(--spacing-md) 0; overflow-y: auto;}
         .level-button { padding: var(--spacing-md); border: 2px solid var(--border-color); border-radius: var(--border-radius); background: var(--surface); cursor: pointer; transition: all var(--transition-base); text-align: center; }
         .level-button:hover { border-color: var(--primary-color); transform: translateY(-2px); }
         .level-button.active { border-color: var(--primary-color); background-color: rgba(30, 136, 229, 0.1); }
@@ -129,6 +137,47 @@
         .fab { position: fixed; bottom: calc(var(--spacing-lg) + var(--safe-area-inset-bottom)); right: var(--spacing-lg); width: 56px; height: 56px; border-radius: 50%; background: var(--primary-color); color: white; border: none; box-shadow: var(--shadow-md); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition-base); z-index: var(--z-fixed); }
         .toast { position: fixed; bottom: calc(120px + var(--safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(100px); background: #323232; color: white; padding: var(--spacing-sm) var(--spacing-lg); border-radius: var(--border-radius-pill); font-size: var(--font-size-sm); opacity: 0; transition: all var(--transition-base); z-index: var(--z-tooltip); white-space: nowrap; max-width: calc(100vw - 48px); }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+        /* ADDED START: Styles for examples and pagination */
+        .result-item {
+            padding: var(--spacing-md) 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .result-item:last-child {
+            border-bottom: none;
+        }
+        .result-examples {
+            margin-top: var(--spacing-sm);
+            padding-left: var(--spacing-md);
+            border-left: 3px solid var(--border-color);
+        }
+        .example {
+            margin-bottom: var(--spacing-sm);
+        }
+        .example-sv {
+            font-style: italic;
+            color: var(--text-primary);
+            margin-bottom: 0;
+        }
+        .example-en {
+            font-style: italic;
+            color: var(--text-secondary);
+            font-size: var(--font-size-sm);
+            margin-bottom: 0;
+        }
+        .pagination-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: var(--spacing-lg);
+            padding-top: var(--spacing-md);
+            border-top: 1px solid var(--border-color);
+        }
+        .pagination-info {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+        }
+        /* ADDED END */
     </style>
     <script type="module">
         document.addEventListener('DOMContentLoaded', () => {

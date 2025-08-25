@@ -1,107 +1,107 @@
 # scripts/import_dictionary.py
 import xml.etree.ElementTree as ET
-import sqlite3
 import os
 import sys
 
-# Add the parent directory to the Python path to allow importing from 'backend'
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+# Add the project root to the Python path to allow importing backend modules
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.insert(0, project_root)
 
-from backend.database import DATABASE_URL
+# MODIFIED: Import dictionary-specific database components
+from backend.database import (
+    dictionary_engine, 
+    Dictionary, 
+    Example, 
+    DictionaryBase, 
+    DictionarySessionLocal
+)
 
-# --- Configuration ---
-# The path to the SQLite database file, extracted from the DATABASE_URL.
-DB_PATH = DATABASE_URL.replace("sqlite:///", "") 
-TABLE_NAME = "dictionary"
-
-def parse_and_insert(xml_file_path):
-    """
-    Parses the en-sv XML dictionary and inserts sv-en mappings into the SQLite database.
-    """
-    if not os.path.exists(xml_file_path):
-        print(f"Error: XML file not found at '{xml_file_path}'")
+def populate_database(session, xml_file_path):
+    """Parses the XML and populates the database with words and examples."""
+    print(f"Parsing XML file: {xml_file_path}")
+    
+    try:
+        tree = ET.parse(xml_file_path)
+        root = tree.getroot()
+    except ET.ParseError as e:
+        print(f"Error parsing XML file: {e}")
         return
-
-    # Connect to the SQLite database
-    conn = sqlite3.connect(DB_PATH)
-    cursor = conn.cursor()
-
-    # Ensure the table is clean before inserting new data
-    print(f"Clearing existing data from '{TABLE_NAME}' table...")
-    cursor.execute(f"DELETE FROM {TABLE_NAME};")
-    conn.commit()
+        
+    word_count = 0
+    example_count = 0
     
-    print(f"Starting to parse '{os.path.basename(xml_file_path)}'...")
-    
-    # Use iterparse for memory efficiency with large XML files
-    context = ET.iterparse(xml_file_path, events=('end',))
-    
-    entries_to_insert = []
-    count = 0
+    # Batch processing setup
+    batch_size = 1000
+    batch = []
 
-    for event, elem in context:
-        # Process each 'word' element once it's fully read
-        if elem.tag == 'word':
-            english_word = elem.get('value')
-            pos = elem.get('class', '')  # part of speech
+    for word_elem in root.findall('.//word[@lang="en"]'):
+        swedish_translation_elem = word_elem.find('translation')
+        if swedish_translation_elem is not None:
+            swedish_word = swedish_translation_elem.get('value')
+            english_word = word_elem.get('value')
+            word_class = word_elem.get('class')
 
-            if not english_word:
+            if not all([swedish_word, english_word]):
                 continue
+
+            dict_entry = Dictionary(
+                swedish_word=swedish_word,
+                english_def=english_word,
+                word_class=word_class
+            )
+            
+            examples = []
+            for example_elem in word_elem.findall('example'):
+                english_example = example_elem.get('value')
+                swedish_example_elem = example_elem.find('translation')
                 
-            # Find all direct 'translation' children
-            for translation in elem.findall('translation'):
-                swedish_word = translation.get('value')
-                if swedish_word:
-                    # Create the reverse mapping (sv -> en)
-                    entry = (swedish_word.strip(), pos, english_word.strip())
-                    entries_to_insert.append(entry)
-                    count += 1
+                if swedish_example_elem is not None:
+                    swedish_example = swedish_example_elem.get('value')
+                    if english_example and swedish_example:
+                        example_entry = Example(
+                            swedish_sentence=swedish_example,
+                            english_sentence=english_example
+                        )
+                        examples.append(example_entry)
+                        example_count += 1
+            
+            dict_entry.examples = examples
+            batch.append(dict_entry)
+            word_count += 1
 
-            # Insert in batches to improve performance
-            if len(entries_to_insert) >= 1000:
-                cursor.executemany(
-                    f"INSERT INTO {TABLE_NAME} (swedish_word, word_class, english_def) VALUES (?, ?, ?)",
-                    entries_to_insert
-                )
-                conn.commit()
-                print(f"Inserted {count} entries...")
-                entries_to_insert = []
+            if len(batch) >= batch_size:
+                session.add_all(batch)
+                session.commit()
+                print(f"Committed batch of {len(batch)} words.")
+                batch = []
 
-            # Free up memory
-            elem.clear()
+    if batch:
+        session.add_all(batch)
+        session.commit()
+        print(f"Committed final batch of {len(batch)} words.")
 
-    # Insert any remaining entries
-    if entries_to_insert:
-        cursor.executemany(
-            f"INSERT INTO {TABLE_NAME} (swedish_word, word_class, english_def) VALUES (?, ?, ?)",
-            entries_to_insert
-        )
-        conn.commit()
+    print(f"Total words processed: {word_count}, Total examples: {example_count}")
+    print("Database population complete.")
 
-    print(f"Parsing complete. Total entries inserted: {count}")
-    
-    # Create an index for faster lookups
-    print("Creating index on 'swedish_word' column for faster searches...")
-    cursor.execute(f"CREATE INDEX IF NOT EXISTS idx_swedish_word ON {TABLE_NAME} (swedish_word);")
-    conn.commit()
-    print("Index created successfully.")
-
-    # Close the database connection
-    conn.close()
 
 if __name__ == "__main__":
-    # This makes the script runnable from the command line.
-    # Example usage: python scripts/import_dictionary.py /path/to/your/en-sv.xml
+    xml_path = os.path.join(project_root, 'scripts', 'dict', 'folkets_en_sv_public.xml')
     
-    if len(sys.argv) < 2:
-        print("Usage: python scripts/import_dictionary.py <path_to_xml_file>")
+    if not os.path.exists(xml_path):
+        print(f"Error: XML file not found at {xml_path}")
         sys.exit(1)
-        
-    xml_path = sys.argv[1]
+
+    print("Initializing dictionary database...")
+    # MODIFIED: Create tables using the dictionary-specific base and engine
+    DictionaryBase.metadata.create_all(bind=dictionary_engine)
     
-    # Initialize the database (creates tables if they don't exist)
-    from backend.database import init_db
-    print("Initializing database...")
-    init_db()
+    # MODIFIED: Get a new session from the dictionary-specific session maker
+    db_session = DictionarySessionLocal()
     
-    parse_and_insert(xml_path)
+    try:
+        if db_session.query(Dictionary).first():
+            print("Dictionary table already contains data. Skipping population.")
+        else:
+            populate_database(db_session, xml_path)
+    finally:
+        db_session.close()

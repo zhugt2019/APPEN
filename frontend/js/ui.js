@@ -95,40 +95,70 @@ export function initUI() {
     elements.navWordbook.addEventListener('click', (e) => { e.preventDefault(); loadWordbook(); });
 }
 
-// --- LAYOUT FIX APPLIED HERE ---
-export function renderSearchResults(results) {
+// --- MODIFIED RENDER FUNCTION ---
+// --- MODIFIED RENDER FUNCTION ---
+export function renderSearchResults(data, append = false) {
     const container = document.getElementById('searchResults');
-    if (!container) return;
-    container.innerHTML = '';
+    // REMOVED: 翻页容器不再需要
+    // const paginationContainer = document.getElementById('paginationControls'); 
     
-    if (results === null) {
+    if (!container) return;
+
+    // 如果不是追加模式，则清空容器
+    if (!append) {
+        container.innerHTML = '';
+    }
+
+    if (data === null) {
         container.innerHTML = `<p class="text-error">Error fetching results.</p>`;
         return;
     }
-    if (results.length === 0) {
+
+    const results = data.items || [];
+    // 如果是第一次加载且没有结果，显示提示信息
+    if (!append && results.length === 0) {
         container.innerHTML = `<p class="text-secondary">No results found.</p>`;
         return;
     }
 
     results.forEach(item => {
         const itemDiv = document.createElement('div');
-        // This class is defined in main.css and provides flexbox layout
-        itemDiv.className = 'result-item flex-between'; 
+        itemDiv.className = 'result-item';
         
         let addButton = '';
         if (state.isLoggedIn) {
             addButton = `<button class="btn btn-sm btn-outline btn-add-wordbook" data-word="${item.swedish_word}" data-definition="${item.english_def}">Add</button>`;
         }
+        
+        let examplesHTML = '';
+        if (item.examples && item.examples.length > 0) {
+            examplesHTML = '<div class="result-examples">';
+            item.examples.forEach(ex => {
+                examplesHTML += `
+                    <div class="example">
+                        <p class="example-sv">”${ex.swedish_sentence}”</p>
+                        <p class="example-en">”${ex.english_sentence}”</p>
+                    </div>`;
+            });
+            examplesHTML += '</div>';
+        }
 
         itemDiv.innerHTML = `
-            <div class="word-details">
-                <h4>${item.swedish_word} <small>(${item.word_class || 'N/A'})</small></h4>
-                <p>${item.english_def}</p>
+            <div class="flex-between">
+                <div class="word-details">
+                    <h4>${item.swedish_word} <small>(${item.word_class || 'N/A'})</small></h4>
+                    <p>${item.english_def}</p>
+                </div>
+                ${addButton}
             </div>
-            ${addButton}
+            ${examplesHTML}
         `;
-        container.appendChild(itemDiv);
+        container.appendChild(itemDiv); // 使用 appendChild 添加元素
     });
+
+    // REMOVED: 渲染翻页按钮的整个逻辑块已被删除
+    // const { total_pages, current_page } = data;
+    // if (total_pages > 1) { ... }
 }
 
 export function renderWordbookList(entries) {

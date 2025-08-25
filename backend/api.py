@@ -2,6 +2,7 @@
 
 import os
 import json
+import math
 import logging
 import asyncio
 import requests
@@ -11,17 +12,18 @@ from typing import List
 
 from fastapi import (
     FastAPI, APIRouter, Depends, HTTPException, status, 
-    File, UploadFile, Form, Request, BackgroundTasks
+    File, UploadFile, Form, Request, BackgroundTasks, Query
 )
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
+from sqlalchemy import case, func
 from cachetools import TTLCache
 
 # --- Project-specific module imports ---
 from . import models, database, auth
-from .database import User, WordbookEntry, Dictionary
+from .database import User, WordbookEntry, Dictionary, get_user_db, get_dictionary_db
 from .prompt_managements import pm
 from .main import (
     transcribe_audio_async, generate_response_async, generate_audio_async,
@@ -100,7 +102,7 @@ chat_router = APIRouter(prefix="/api", tags=["Conversation Practice"])
 # === Authentication Endpoints ===
 # CORRECTED: Path is now relative to the router's prefix
 @auth_router.post("/register", response_model=models.User, status_code=status.HTTP_201_CREATED)
-def register_user(user: models.UserCreate, db: Session = Depends(database.get_db)):
+def register_user(user: models.UserCreate, db: Session = Depends(database.get_user_db)):
     db_user = auth.get_user(db, username=user.username)
     if db_user:
         raise HTTPException(status_code=400, detail="Username already registered")
@@ -113,7 +115,7 @@ def register_user(user: models.UserCreate, db: Session = Depends(database.get_db
 
 # CORRECTED: Path is now relative to the router's prefix
 @auth_router.post("/login", response_model=models.Token)
-def login_for_access_token(form_data: models.UserCreate, db: Session = Depends(database.get_db)):
+def login_for_access_token(form_data: models.UserCreate, db: Session = Depends(database.get_user_db)):
     user = auth.get_user(db, username=form_data.username)
     if not user or not user.verify_password(form_data.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password", headers={"WWW-Authenticate": "Bearer"})
@@ -122,23 +124,64 @@ def login_for_access_token(form_data: models.UserCreate, db: Session = Depends(d
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-# === Word Lookup and Wordbook Endpoints ===
-# CORRECTED: Path is now relative to the router's prefix
-@word_router.get("/search", response_model=List[models.WordSearchResult])
-def search_word(q: str, db: Session = Depends(database.get_db)):
-    if not q or len(q.strip()) < 1: return []
-    search_query = f"%{q.strip().lower()}%"
-    results = db.query(Dictionary).filter(Dictionary.swedish_word.like(search_query)).limit(20).all()
-    return results
+# === MODIFIED Word Lookup Endpoint ===
+@word_router.get("/search", response_model=models.PaginatedWordSearchResult)
+def search_word(
+    q: str = Query(..., min_length=1),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+    db: Session = Depends(database.get_dictionary_db)
+):
+    search_term = q.strip().lower()
+    if not search_term:
+        return {"total_items": 0, "total_pages": 0, "current_page": 1, "items": []}
+
+    # Base query to count total matching items
+    count_query = db.query(func.count(Dictionary.id)).filter(
+        Dictionary.swedish_word.like(f"%{search_term}%")
+    )
+    total_items = count_query.scalar()
+    
+    if total_items == 0:
+        return {"total_items": 0, "total_pages": 0, "current_page": 1, "items": []}
+
+    # Define the sorting logic
+    order_logic = case(
+        (func.lower(Dictionary.swedish_word) == search_term, 1),
+        (func.lower(Dictionary.swedish_word).like(f"{search_term}%"), 2),
+        (func.lower(Dictionary.swedish_word).like(f"%{search_term}%"), 3),
+        else_=4
+    )
+
+    # Main query with sorting, pagination, and eager loading of examples
+    results_query = (
+        db.query(Dictionary)
+        .filter(Dictionary.swedish_word.like(f"%{search_term}%"))
+        .options(joinedload(Dictionary.examples))  # Eagerly load examples
+        .order_by(order_logic, Dictionary.swedish_word)
+        .offset((page - 1) * page_size)
+        .limit(page_size)
+    )
+    
+    results = results_query.all()
+
+    total_pages = math.ceil(total_items / page_size)
+
+    return {
+        "total_items": total_items,
+        "total_pages": total_pages,
+        "current_page": page,
+        "items": results,
+    }
 
 # CORRECTED: Path is now relative to the router's prefix
 @word_router.get("/wordbook", response_model=List[models.WordbookEntry])
-def get_wordbook(db: Session = Depends(database.get_db), current_user: User = Depends(auth.get_current_active_user)):
+def get_wordbook(db: Session = Depends(database.get_user_db), current_user: User = Depends(auth.get_current_active_user)):
     return db.query(WordbookEntry).filter(WordbookEntry.user_id == current_user.id).order_by(WordbookEntry.created_at.desc()).all()
 
 # CORRECTED: Path is now relative to the router's prefix
 @word_router.post("/wordbook", response_model=models.WordbookEntry, status_code=status.HTTP_201_CREATED)
-def add_to_wordbook(entry: models.WordbookEntryCreate, db: Session = Depends(database.get_db), current_user: User = Depends(auth.get_current_active_user)):
+def add_to_wordbook(entry: models.WordbookEntryCreate, db: Session = Depends(database.get_user_db), current_user: User = Depends(auth.get_current_active_user)):
     existing_entry = db.query(WordbookEntry).filter(WordbookEntry.user_id == current_user.id, WordbookEntry.word == entry.word).first()
     if existing_entry:
         raise HTTPException(status_code=409, detail="Word already exists in your wordbook")
@@ -150,7 +193,7 @@ def add_to_wordbook(entry: models.WordbookEntryCreate, db: Session = Depends(dat
 
 # CORRECTED: Path is now relative to the router's prefix
 @word_router.delete("/wordbook/{word_id}", status_code=status.HTTP_204_NO_CONTENT)
-def remove_from_wordbook(word_id: int, db: Session = Depends(database.get_db), current_user: User = Depends(auth.get_current_active_user)):
+def remove_from_wordbook(word_id: int, db: Session = Depends(database.get_user_db), current_user: User = Depends(auth.get_current_active_user)):
     entry_to_delete = db.query(WordbookEntry).filter(WordbookEntry.id == word_id).first()
     if not entry_to_delete:
         raise HTTPException(status_code=404, detail="Word entry not found")
