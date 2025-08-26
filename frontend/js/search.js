@@ -56,7 +56,7 @@ async function performSearch(append = false) {
     isLoadingMore = true; // 开始加载
     try {
         const results = await api.searchWord(currentQuery, currentPage);
-        renderSearchResults(results, append); // 传递 append 参数
+        renderSearchResults(results, append, currentQuery); // Pass currentQuery
         
         // 更新状态
         hasMoreResults = currentPage < results.total_pages;

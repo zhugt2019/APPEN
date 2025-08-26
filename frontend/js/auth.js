@@ -119,4 +119,8 @@ export function logout() {
 }
 
 // This ensures event listeners are set up after the main UI script has cached the elements.
-document.addEventListener('DOMContentLoaded', setupAuthEventListeners);
+// document.addEventListener('DOMContentLoaded', setupAuthEventListeners);
+
+export function initAuth() {
+    setupAuthEventListeners();
+}

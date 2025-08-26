@@ -9,6 +9,7 @@ import requests
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import List
+import spacy
 
 from fastapi import (
     FastAPI, APIRouter, Depends, HTTPException, status, 
@@ -18,12 +19,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import case, func
+from sqlalchemy import case, func, or_
 from cachetools import TTLCache
 
 # --- Project-specific module imports ---
 from . import models, database, auth
-from .database import User, WordbookEntry, Dictionary, get_user_db, get_dictionary_db
+from .database import User, WordbookEntry, Dictionary, get_user_db, get_dictionary_db, Example 
 from .prompt_managements import pm
 from .main import (
     transcribe_audio_async, generate_response_async, generate_audio_async,
@@ -123,47 +124,100 @@ def login_for_access_token(form_data: models.UserCreate, db: Session = Depends(d
     access_token = auth.create_access_token(data={"sub": user.username}, expires_delta=access_token_expires)
     return {"access_token": access_token, "token_type": "bearer"}
 
+# --- Add this code after the imports, to load spaCy models on startup ---
+try:
+    nlp_sv = spacy.load("sv_core_news_sm")
+    nlp_en = spacy.load("en_core_web_sm")
+    logger.info("spaCy models loaded for API.")
+except OSError:
+    nlp_sv = nlp_en = None
+    logger.error("spaCy models not found, lemmatization will be disabled.")
+
+def get_lemma_api(text, lang):
+    """Helper function to get the lemmas of all words in a user query."""
+    if lang == 'sv' and nlp_sv:
+        doc = nlp_sv(text.lower())
+        return " ".join([token.lemma_ for token in doc])
+    if lang == 'en' and nlp_en:
+        doc = nlp_en(text.lower())
+        return " ".join([token.lemma_ for token in doc])
+    return text.lower()
+# --- End of added code ---
 
 # === MODIFIED Word Lookup Endpoint ===
 @word_router.get("/search", response_model=models.PaginatedWordSearchResult)
 def search_word(
     q: str = Query(..., min_length=1),
     page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
+    page_size: int = Query(5, ge=1, le=50), # Reduced page size for combined results
     db: Session = Depends(database.get_dictionary_db)
 ):
     search_term = q.strip().lower()
     if not search_term:
         return {"total_items": 0, "total_pages": 0, "current_page": 1, "items": []}
+        
+    # Get lemma for the search term
+    sv_lemma_term = get_lemma_api(search_term, 'sv')
+    en_lemma_term = get_lemma_api(search_term, 'en')
 
-    # Base query to count total matching items
-    count_query = db.query(func.count(Dictionary.id)).filter(
-        Dictionary.swedish_word.like(f"%{search_term}%")
+    # --- 1. Main Word Search Logic ---
+    search_filter = or_(
+        Dictionary.swedish_word.like(f"%{search_term}%"),
+        Dictionary.english_def.like(f"%{search_term}%"),
+        Dictionary.swedish_lemma.like(f"%{sv_lemma_term}%"),
+        Dictionary.english_lemma.like(f"%{en_lemma_term}%")
     )
+
+    count_query = db.query(func.count(Dictionary.id)).filter(search_filter)
     total_items = count_query.scalar()
-    
-    if total_items == 0:
-        return {"total_items": 0, "total_pages": 0, "current_page": 1, "items": []}
 
-    # Define the sorting logic
     order_logic = case(
+        # Priority 1: Exact match on word
         (func.lower(Dictionary.swedish_word) == search_term, 1),
-        (func.lower(Dictionary.swedish_word).like(f"{search_term}%"), 2),
-        (func.lower(Dictionary.swedish_word).like(f"%{search_term}%"), 3),
-        else_=4
+        (func.lower(Dictionary.english_def) == search_term, 2),
+        # Priority 2: Exact match on lemma
+        (Dictionary.swedish_lemma == sv_lemma_term, 3),
+        (Dictionary.english_lemma == en_lemma_term, 4),
+        # Priority 3: Starts-with match on word
+        (func.lower(Dictionary.swedish_word).like(f"{search_term}%"), 5),
+        (func.lower(Dictionary.english_def).like(f"{search_term}%"), 6),
+        # Priority 4: Contains match (default)
+        else_=7
     )
 
-    # Main query with sorting, pagination, and eager loading of examples
     results_query = (
         db.query(Dictionary)
-        .filter(Dictionary.swedish_word.like(f"%{search_term}%"))
-        .options(joinedload(Dictionary.examples))  # Eagerly load examples
+        .filter(search_filter)
+        .options(joinedload(Dictionary.examples))
         .order_by(order_logic, Dictionary.swedish_word)
         .offset((page - 1) * page_size)
         .limit(page_size)
     )
+    word_results = results_query.all()
     
-    results = results_query.all()
+    # --- 2. Example Sentence Search Logic ---
+    examples_found = []
+    if page == 1: # Only search examples on the first page
+        example_filter = or_(
+            Example.swedish_sentence.like(f"%{search_term}%"),
+            Example.english_sentence.like(f"%{search_term}%")
+        )
+        example_results_query = (
+            db.query(Example)
+            .join(Dictionary) # Join to get the parent word
+            .filter(example_filter)
+            .limit(5) # Limit to 5 examples
+        )
+        example_results = example_results_query.all()
+        
+        # Convert to response model
+        examples_found = [
+            models.ExampleSearchResult(
+                swedish_sentence=ex.swedish_sentence,
+                english_sentence=ex.english_sentence,
+                parent_word=ex.word_entry.swedish_word
+            ) for ex in example_results
+        ]
 
     total_pages = math.ceil(total_items / page_size)
 
@@ -171,7 +225,8 @@ def search_word(
         "total_items": total_items,
         "total_pages": total_pages,
         "current_page": page,
-        "items": results,
+        "items": word_results,
+        "examples_found": examples_found
     }
 
 # CORRECTED: Path is now relative to the router's prefix

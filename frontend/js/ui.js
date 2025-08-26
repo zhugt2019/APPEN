@@ -33,6 +33,15 @@ function cacheElements() {
     elements.allNavLinks = document.querySelectorAll('.nav-link');
 }
 
+// --- ADD a helper function for highlighting at the top of the file or inside renderSearchResults ---
+function highlight(text, term) {
+    if (!term || !text) {
+        return text;
+    }
+    const regex = new RegExp(`(${term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
+    return text.replace(regex, '<strong class="highlight">$1</strong>');
+}
+
 export function updateNavbar() {
     if (!elements.navLogin) return;
     if (state.isLoggedIn) {
@@ -97,14 +106,11 @@ export function initUI() {
 
 // --- MODIFIED RENDER FUNCTION ---
 // --- MODIFIED RENDER FUNCTION ---
-export function renderSearchResults(data, append = false) {
+// --- REPLACE the entire renderSearchResults function ---
+export function renderSearchResults(data, append = false, query = '') {
     const container = document.getElementById('searchResults');
-    // REMOVED: 翻页容器不再需要
-    // const paginationContainer = document.getElementById('paginationControls'); 
-    
     if (!container) return;
 
-    // 如果不是追加模式，则清空容器
     if (!append) {
         container.innerHTML = '';
     }
@@ -113,52 +119,86 @@ export function renderSearchResults(data, append = false) {
         container.innerHTML = `<p class="text-error">Error fetching results.</p>`;
         return;
     }
-
-    const results = data.items || [];
-    // 如果是第一次加载且没有结果，显示提示信息
-    if (!append && results.length === 0) {
-        container.innerHTML = `<p class="text-secondary">No results found.</p>`;
+    
+    // On first page load, check if there are no results at all
+    if (!append && !data.items.length && !data.examples_found.length) {
+        container.innerHTML = `<p class="text-secondary">No results found for "${query}".</p>`;
         return;
     }
 
-    results.forEach(item => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = 'result-item';
-        
-        let addButton = '';
-        if (state.isLoggedIn) {
-            addButton = `<button class="btn btn-sm btn-outline btn-add-wordbook" data-word="${item.swedish_word}" data-definition="${item.english_def}">Add</button>`;
+    // --- 1. Render main word results ---
+    if (data.items && data.items.length > 0) {
+        if (!append) { // Add title only for the first page
+             container.innerHTML += `<h3>Dictionary Entries</h3>`;
         }
-        
-        let examplesHTML = '';
-        if (item.examples && item.examples.length > 0) {
-            examplesHTML = '<div class="result-examples">';
-            item.examples.forEach(ex => {
-                examplesHTML += `
-                    <div class="example">
-                        <p class="example-sv">”${ex.swedish_sentence}”</p>
-                        <p class="example-en">”${ex.english_sentence}”</p>
-                    </div>`;
-            });
-            examplesHTML += '</div>';
-        }
+        data.items.forEach(item => {
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'result-item';
+            
+            let addButton = '';
+            if (state.isLoggedIn) {
+                addButton = `<button class="btn btn-sm btn-outline btn-add-wordbook" data-word="${item.swedish_word}" data-definition="${item.english_def}">Add</button>`;
+            }
+            
+            let examplesHTML = '';
+            if (item.examples && item.examples.length > 0) {
+                examplesHTML = '<div class="result-examples">';
+                item.examples.forEach(ex => {
+                    examplesHTML += `
+                        <div class="example">
+                            <p class="example-sv">”${ex.swedish_sentence}”</p>
+                            <p class="example-en">”${ex.english_sentence}”</p>
+                        </div>`;
+                });
+                examplesHTML += '</div>';
+            }
 
-        itemDiv.innerHTML = `
-            <div class="flex-between">
-                <div class="word-details">
-                    <h4>${item.swedish_word} <small>(${item.word_class || 'N/A'})</small></h4>
-                    <p>${item.english_def}</p>
+            // Determine search direction for context
+            const isSwedishSearch = item.swedish_word.toLowerCase().includes(query.toLowerCase()) || 
+                                    (item.swedish_lemma && item.swedish_lemma.includes(query.toLowerCase()));
+
+            itemDiv.innerHTML = `
+                <div class="flex-between">
+                    <div class="word-details">
+                        <h4>
+                            ${highlight(item.swedish_word, query)} 
+                            <small>(${item.word_class || 'N/A'})</small>
+                            <span class="text-secondary">${isSwedishSearch ? '🇸🇪→🇬🇧' : '🇬🇧→🇸🇪'}</span>
+                        </h4>
+                        <p>${highlight(item.english_def, query)}</p>
+                    </div>
+                    ${addButton}
                 </div>
-                ${addButton}
-            </div>
-            ${examplesHTML}
-        `;
-        container.appendChild(itemDiv); // 使用 appendChild 添加元素
-    });
+                ${examplesHTML}
+            `;
+            container.appendChild(itemDiv);
+        });
+    }
 
-    // REMOVED: 渲染翻页按钮的整个逻辑块已被删除
-    // const { total_pages, current_page } = data;
-    // if (total_pages > 1) { ... }
+    // --- 2. Render results found in examples (only on first page) ---
+    if (!append && data.examples_found && data.examples_found.length > 0) {
+        let examplesSectionHTML = `<h3>Found in Examples</h3>`;
+        data.examples_found.forEach(ex => {
+            examplesSectionHTML += `
+                <div class="result-item">
+                    <div class="word-details">
+                        <p class="example-sv">”${highlight(ex.swedish_sentence, query)}”</p>
+                        <p class="example-en">”${highlight(ex.english_sentence, query)}”</p>
+                        <p class="text-secondary mt-2">From word: <strong>${ex.parent_word}</strong></p>
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML += examplesSectionHTML;
+    }
+
+    // --- 3. Add a simple CSS rule for the highlight class ---
+    if (!document.getElementById('highlight-style')) {
+        const style = document.createElement('style');
+        style.id = 'highlight-style';
+        style.innerHTML = `.highlight { background-color: var(--secondary-color); color: var(--text-primary); border-radius: 3px; padding: 0 2px; }`;
+        document.head.appendChild(style);
+    }
 }
 
 export function renderWordbookList(entries) {

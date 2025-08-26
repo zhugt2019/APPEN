@@ -1,19 +1,14 @@
 // frontend/js/main.js (FINAL CORRECTED VERSION)
 
 import { initState } from './state.js';
+import { checkAuth, initAuth } from './auth.js';
 import { initUI, updateNavbar } from './ui.js';
 import { initConversation } from './conversation.js';
 
-// --- START: CORRECTED SECTION ---
-// We must import all modules that need to run on startup.
-// These modules will set up their own event listeners.
-import './auth.js';
+// Import these modules so their event listeners are set up.
+// These modules handle their own initialization internally.
 import './search.js';
 import './wordbook.js';
-// --- END: CORRECTED SECTION ---
-
-import { checkAuth } from './auth.js';
-
 
 /**
  * Main Application Initialization
@@ -27,13 +22,16 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Check for an existing auth token in localStorage
     checkAuth();
 
-    // 3. Cache all necessary DOM elements and setup general UI listeners
+    // 3. Cache DOM elements and set up general UI event listeners
     initUI();
 
-    // 4. Update the UI based on the initial authentication state
+    // 4. Set up authentication-specific event listeners (for login/logout buttons, etc.)
+    initAuth();
+
+    // 5. Update UI components like the navbar based on the initial auth state
     updateNavbar();
 
-    // 5. Initialize the core conversation functionality
+    // 6. Initialize the core conversation functionality
     initConversation();
 
     console.log("App initialized successfully.");

@@ -5,16 +5,26 @@ const CACHE_NAME = 'svenska-ai-practice-v1.0.2'; // Update version to ensure ser
 const RUNTIME_CACHE = 'svenska-ai-practice-runtime';
 
 // --- Static Assets to Pre-cache ---
+// frontend/sw.js
+
 const STATIC_CACHE_URLS = [
     '/',
     '/index.html',
     '/css/main.css',
     '/css/responsive.css',
-    '/js/app.js',
-    '/js/recorder.js',
+    // --- CORRECTED SECTION START ---
+    '/js/main.js', // Changed from app.js
     '/js/api.js',
+    '/js/auth.js',
+    '/js/conversation.js',
     '/js/conversation-practice.js',
+    '/js/recorder.js',
+    '/js/search.js',
+    '/js/state.js',
+    '/js/ui.js',
     '/js/utils.js',
+    '/js/wordbook.js',
+    // --- CORRECTED SECTION END ---
     '/manifest.json',
     '/offline.html',
     '/assets/icons/icon-192.png',

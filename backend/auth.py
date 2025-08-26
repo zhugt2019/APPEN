@@ -44,7 +44,7 @@ def get_user(db: Session, username: str) -> Optional[User]:
     """
     return db.query(User).filter(User.username == username).first()
 
-async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_user_db)) -> User: # MODIFIED
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_user_db)) -> User: # MODIFIED
     """
     Dependency to get the current authenticated user.
     It decodes the token, validates the username, and fetches the user from the user DB.
@@ -68,7 +68,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = De
         raise credentials_exception
     return user
 
-async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
+def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
     """
     A simple dependency to check if the user is "active".
     For this project, all users are considered active.

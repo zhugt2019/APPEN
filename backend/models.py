@@ -203,3 +203,28 @@ class WordbookEntry(WordbookEntryBase):
     class Config:
         orm_mode = True
 
+# ADDED: A model for results found inside example sentences
+class ExampleSearchResult(BaseModel):
+    swedish_sentence: str
+    english_sentence: str
+    parent_word: str # The word this example belongs to
+    model_config = ConfigDict(from_attributes=True)
+
+class WordSearchResult(BaseModel):
+    id: int
+    swedish_word: str
+    word_class: Optional[str] = None
+    english_def: str
+    # ADDED: Lemmas can be useful for the frontend later
+    swedish_lemma: Optional[str] = None
+    english_lemma: Optional[str] = None
+    examples: List[Example] = []
+    model_config = ConfigDict(from_attributes=True)
+
+class PaginatedWordSearchResult(BaseModel):
+    total_items: int
+    total_pages: int
+    current_page: int
+    items: List[WordSearchResult]
+    # ADDED: A list for results found in examples
+    examples_found: List[ExampleSearchResult] = []

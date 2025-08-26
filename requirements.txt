@@ -37,6 +37,16 @@ accelerate
 # ===== Streamlit（桌面版） =====
 streamlit
 
+# Populate dictionary
+spacy==3.8.7
+
+# English model (small)
+# PEP 508 format: package_name @ url_to_wheel
+en_core_web_sm @ https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl
+
+# Swedish model (small)
+sv_core_news_sm @ https://github.com/explosion/spacy-models/releases/download/sv_core_news_sm-3.8.0/sv_core_news_sm-3.8.0-py3-none-any.whl
+
 # ===== 网络请求 =====
 requests
 httpx

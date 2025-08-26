@@ -55,6 +55,11 @@ class Dictionary(DictionaryBase):
     swedish_word = Column(String, nullable=False, index=True)
     word_class = Column(String)
     english_def = Column(String, nullable=False)
+
+    # --- ADDED: Columns for lemmatization ---
+    swedish_lemma = Column(String, index=True)
+    english_lemma = Column(String, index=True)
+    # --- END ADDED ---
     
     examples = relationship("Example", back_populates="word_entry", cascade="all, delete-orphan")
 
