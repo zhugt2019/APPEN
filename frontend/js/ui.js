@@ -105,8 +105,6 @@ export function initUI() {
 }
 
 // --- MODIFIED RENDER FUNCTION ---
-// --- MODIFIED RENDER FUNCTION ---
-// --- REPLACE the entire renderSearchResults function ---
 export function renderSearchResults(data, append = false, query = '') {
     const container = document.getElementById('searchResults');
     if (!container) return;
@@ -120,15 +118,13 @@ export function renderSearchResults(data, append = false, query = '') {
         return;
     }
     
-    // On first page load, check if there are no results at all
     if (!append && !data.items.length && !data.examples_found.length) {
         container.innerHTML = `<p class="text-secondary">No results found for "${query}".</p>`;
         return;
     }
 
-    // --- 1. Render main word results ---
     if (data.items && data.items.length > 0) {
-        if (!append) { // Add title only for the first page
+        if (!append) {
              container.innerHTML += `<h3>Dictionary Entries</h3>`;
         }
         data.items.forEach(item => {
@@ -140,42 +136,83 @@ export function renderSearchResults(data, append = false, query = '') {
                 addButton = `<button class="btn btn-sm btn-outline btn-add-wordbook" data-word="${item.swedish_word}" data-definition="${item.english_def}">Add</button>`;
             }
             
+            // Section: Definitions and Explanations
+            let definitionHTML = '';
+            if (item.swedish_definition || item.swedish_explanation) {
+                definitionHTML += `<div class="result-details"><h4>Definition & Explanation</h4>`;
+                
+                // Render Swedish Definition if it exists
+                if (item.swedish_definition) {
+                    definitionHTML += `<div class="detail-block"><p class="detail-sv">${highlight(item.swedish_definition, query)}</p>${item.english_definition ? `<p class="detail-en">${highlight(item.english_definition, query)}</p>` : ''}</div>`;
+                }
+
+                // --- FIXED [Problem 1]: Only render explanation if it's different from the definition ---
+                const isExplanationDifferent = item.swedish_explanation && (item.swedish_explanation !== item.swedish_definition);
+                if (isExplanationDifferent) {
+                    definitionHTML += `<div class="detail-block"><p class="detail-sv">${highlight(item.swedish_explanation, query)}</p>${item.english_explanation ? `<p class="detail-en">${highlight(item.english_explanation, query)}</p>` : ''}</div>`;
+                }
+                definitionHTML += `</div>`;
+            }
+
+            // Section: Examples
             let examplesHTML = '';
             if (item.examples && item.examples.length > 0) {
-                examplesHTML = '<div class="result-examples">';
+                examplesHTML = '<div class="result-details"><h4>Examples</h4>';
                 item.examples.forEach(ex => {
-                    examplesHTML += `
-                        <div class="example">
-                            <p class="example-sv">”${ex.swedish_sentence}”</p>
-                            <p class="example-en">”${ex.english_sentence}”</p>
-                        </div>`;
+                    examplesHTML += `<div class="example"><p class="example-sv">”${ex.swedish_sentence}”</p><p class="example-en">”${ex.english_sentence}”</p></div>`;
                 });
                 examplesHTML += '</div>';
             }
+            
+            // Section: Idioms
+            let idiomsHTML = '';
+            if (item.idioms && item.idioms.length > 0) {
+                idiomsHTML = '<div class="result-details"><h4>Related Idioms</h4>';
+                item.idioms.forEach(idiom => {
+                    idiomsHTML += `<div class="idiom"><p class="idiom-sv">”${idiom.swedish_idiom}”</p><p class="idiom-en">”${idiom.english_idiom}”</p></div>`;
+                });
+                idiomsHTML += '</div>';
+            }
 
-            // Determine search direction for context
+            // Section: Advanced (collapsible)
+            let advancedHTML = '';
+            if (item.grammar_notes || item.antonyms) {
+                advancedHTML += `<details class="advanced-details"><summary>Grammar & Related Words</summary>`;
+                if (item.grammar_notes) {
+                    advancedHTML += `<div class="result-details"><h4>Grammar</h4><p class="detail-sv">${item.grammar_notes.replace(/\n/g, '<br>')}</p></div>`;
+                }
+                if (item.antonyms) {
+                    advancedHTML += `<div class="result-details"><h4>Antonyms</h4><p class="detail-sv">${item.antonyms}</p></div>`;
+                }
+                advancedHTML += `</details>`;
+            }
+
             const isSwedishSearch = item.swedish_word.toLowerCase().includes(query.toLowerCase()) || 
                                     (item.swedish_lemma && item.swedish_lemma.includes(query.toLowerCase()));
 
+            // --- FIXED [Problem 3]: Moved search direction icon into H2 tag ---
             itemDiv.innerHTML = `
-                <div class="flex-between">
+                <div class="result-item-header flex-between">
                     <div class="word-details">
-                        <h4>
+                        <h2>
                             ${highlight(item.swedish_word, query)} 
-                            <small>(${item.word_class || 'N/A'})</small>
-                            <span class="text-secondary">${isSwedishSearch ? '🇸🇪→🇬🇧' : '🇬🇧→🇸🇪'}</span>
-                        </h4>
-                        <p>${highlight(item.english_def, query)}</p>
+                            <span class="badge">${item.word_class || 'N/A'}</span>
+                            <span class="text-secondary search-direction">${isSwedishSearch ? '🇸🇪→🇬🇧' : '🇬🇧→🇸🇪'}</span>
+                        </h2>
+                        <p class="translation-def">${highlight(item.english_def, query)}</p>
                     </div>
                     ${addButton}
                 </div>
+                ${definitionHTML}
                 ${examplesHTML}
+                ${idiomsHTML}
+                ${advancedHTML}
             `;
             container.appendChild(itemDiv);
         });
     }
 
-    // --- 2. Render results found in examples (only on first page) ---
+    // Render results found in examples (this part remains the same)
     if (!append && data.examples_found && data.examples_found.length > 0) {
         let examplesSectionHTML = `<h3>Found in Examples</h3>`;
         data.examples_found.forEach(ex => {
@@ -191,12 +228,24 @@ export function renderSearchResults(data, append = false, query = '') {
         });
         container.innerHTML += examplesSectionHTML;
     }
-
-    // --- 3. Add a simple CSS rule for the highlight class ---
-    if (!document.getElementById('highlight-style')) {
+    
+    // Inject styles if they don't exist
+    if (!document.getElementById('custom-details-style')) {
         const style = document.createElement('style');
-        style.id = 'highlight-style';
-        style.innerHTML = `.highlight { background-color: var(--secondary-color); color: var(--text-primary); border-radius: 3px; padding: 0 2px; }`;
+        style.id = 'custom-details-style';
+        // --- FIXED [Problem 2]: Combined .example-en and .idiom-en selectors ---
+        style.innerHTML = `
+            .result-item h2 { font-size: var(--font-size-2xl); margin-bottom: var(--spacing-xs); display: flex; align-items: center; gap: var(--spacing-sm); flex-wrap: wrap; }
+            .result-item .badge { font-size: var(--font-size-xs); background-color: var(--secondary-color); color: var(--text-primary); padding: 4px 8px; border-radius: var(--border-radius-pill); font-weight: 600; white-space: nowrap; }
+            .result-item .search-direction { font-size: var(--font-size-sm); font-weight: normal; }
+            .result-item .translation-def { font-size: var(--font-size-lg); color: var(--text-primary); font-weight: 600; margin: 0; }
+            .result-details { margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color); }
+            .result-details h4 { font-size: var(--font-size-base); color: var(--primary-color); margin-bottom: var(--spacing-sm); }
+            .detail-sv, .example-sv, .idiom-sv { color: var(--text-primary); font-style: italic; }
+            .detail-en, .example-en, .idiom-en { color: var(--text-secondary); font-size: var(--font-size-sm); font-style: italic; }
+            .advanced-details { margin-top: var(--spacing-md); }
+            .advanced-details summary { cursor: pointer; font-weight: 500; color: var(--primary-color); }
+        `;
         document.head.appendChild(style);
     }
 }

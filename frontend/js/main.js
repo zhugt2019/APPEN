@@ -1,8 +1,7 @@
 // frontend/js/main.js (FINAL CORRECTED VERSION)
-
+import { initUI, updateNavbar, showView } from './ui.js';
 import { initState } from './state.js';
 import { checkAuth, initAuth } from './auth.js';
-import { initUI, updateNavbar } from './ui.js';
 import { initConversation } from './conversation.js';
 
 // Import these modules so their event listeners are set up.
@@ -33,6 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // 6. Initialize the core conversation functionality
     initConversation();
+
+    // Explicitly set the default view to 'search' ---
+    showView('search'); 
 
     console.log("App initialized successfully.");
 });

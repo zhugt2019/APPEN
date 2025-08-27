@@ -188,7 +188,7 @@ def search_word(
     results_query = (
         db.query(Dictionary)
         .filter(search_filter)
-        .options(joinedload(Dictionary.examples))
+        .options(joinedload(Dictionary.examples), joinedload(Dictionary.idioms))
         .order_by(order_logic, Dictionary.swedish_word)
         .offset((page - 1) * page_size)
         .limit(page_size)

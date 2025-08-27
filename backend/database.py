@@ -48,6 +48,16 @@ class WordbookEntry(UserDataBase):
 
 # --- Dictionary Data Models (associated with DictionaryBase) ---
 
+class Idiom(DictionaryBase):
+    """Represents an idiom related to a dictionary entry."""
+    __tablename__ = "idioms"
+    id = Column(Integer, primary_key=True, index=True)
+    swedish_idiom = Column(Text, nullable=False)
+    english_idiom = Column(Text, nullable=False)
+    dictionary_id = Column(Integer, ForeignKey("dictionary.id"), nullable=False)
+
+    word_entry = relationship("Dictionary", back_populates="idioms")
+
 class Dictionary(DictionaryBase):
     """Represents a Swedish-to-English dictionary entry."""
     __tablename__ = "dictionary"
@@ -61,7 +71,22 @@ class Dictionary(DictionaryBase):
     english_lemma = Column(String, index=True)
     # --- END ADDED ---
     
+    # --- ADDED START: Columns for definitions and explanations ---
+    # Using Text instead of String for potentially longer content
+    swedish_definition = Column(Text, nullable=True)
+    english_definition = Column(Text, nullable=True)
+    swedish_explanation = Column(Text, nullable=True)
+    english_explanation = Column(Text, nullable=True)
+    # --- ADDED END ---
+
+    # --- ADDED START: New fields for grammar and related words ---
+    grammar_notes = Column(Text, nullable=True)
+    antonyms = Column(Text, nullable=True) # Storing as a simple comma-separated string for now
+    # --- ADDED END ---
+
     examples = relationship("Example", back_populates="word_entry", cascade="all, delete-orphan")
+    idioms = relationship("Idiom", back_populates="word_entry", cascade="all, delete-orphan")
+
 
 class Example(DictionaryBase):
     """Represents an example sentence for a dictionary entry."""

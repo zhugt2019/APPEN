@@ -169,23 +169,6 @@ class Example(BaseModel):
     english_sentence: str
     model_config = ConfigDict(from_attributes=True)
 
-# --- Word Lookup Models ---
-
-class WordSearchResult(BaseModel):
-    id: int
-    swedish_word: str
-    word_class: Optional[str] = None
-    english_def: str
-    examples: List[Example] = []
-    model_config = ConfigDict(from_attributes=True)
-
-# ADDED: A wrapper model for paginated responses
-class PaginatedWordSearchResult(BaseModel):
-    total_items: int
-    total_pages: int
-    current_page: int
-    items: List[WordSearchResult]
-
 # --- Wordbook Models ---
 
 class WordbookEntryBase(BaseModel):
@@ -210,6 +193,13 @@ class ExampleSearchResult(BaseModel):
     parent_word: str # The word this example belongs to
     model_config = ConfigDict(from_attributes=True)
 
+# --- ADDED START: A Pydantic model for a single Idiom ---
+class Idiom(BaseModel):
+    swedish_idiom: str
+    english_idiom: str
+    model_config = ConfigDict(from_attributes=True)
+# --- ADDED END ---
+
 class WordSearchResult(BaseModel):
     id: int
     swedish_word: str
@@ -218,6 +208,15 @@ class WordSearchResult(BaseModel):
     # ADDED: Lemmas can be useful for the frontend later
     swedish_lemma: Optional[str] = None
     english_lemma: Optional[str] = None
+    # --- ADDED/MODIFIED START: Fields for definition, explanation, and new data ---
+    swedish_definition: Optional[str] = None
+    english_definition: Optional[str] = None
+    swedish_explanation: Optional[str] = None
+    english_explanation: Optional[str] = None
+    grammar_notes: Optional[str] = None
+    antonyms: Optional[str] = None
+    # --- ADDED/MODIFIED END ---
+    idioms: List[Idiom] = []
     examples: List[Example] = []
     model_config = ConfigDict(from_attributes=True)
 
