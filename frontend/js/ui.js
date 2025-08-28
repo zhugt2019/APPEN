@@ -2,6 +2,7 @@
 
 import { state } from './state.js';
 import { loadWordbook } from './wordbook.js';
+import { loadInitialScenario } from './conversation.js';
 
 
 export const elements = {};
@@ -98,7 +99,13 @@ export function initUI() {
     elements.levelButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.level === state.currentLevel));
 
     // All navigation event listeners are now centralized here for reliability.
-    elements.navPractice.addEventListener('click', (e) => { e.preventDefault(); showView('practice'); });
+    // --- MODIFY THIS EVENT LISTENER ---
+    elements.navPractice.addEventListener('click', (e) => { 
+        e.preventDefault(); 
+        showView('practice'); 
+        // Call the new function to load data on demand
+        loadInitialScenario(); 
+    });
     elements.navSearch.addEventListener('click', (e) => { e.preventDefault(); showView('search'); });
     // The listener for Wordbook now calls the imported loadWordbook function.
     elements.navWordbook.addEventListener('click', (e) => { e.preventDefault(); loadWordbook(); });
@@ -136,17 +143,12 @@ export function renderSearchResults(data, append = false, query = '') {
                 addButton = `<button class="btn btn-sm btn-outline btn-add-wordbook" data-word="${item.swedish_word}" data-definition="${item.english_def}">Add</button>`;
             }
             
-            // Section: Definitions and Explanations
             let definitionHTML = '';
             if (item.swedish_definition || item.swedish_explanation) {
                 definitionHTML += `<div class="result-details"><h4>Definition & Explanation</h4>`;
-                
-                // Render Swedish Definition if it exists
                 if (item.swedish_definition) {
                     definitionHTML += `<div class="detail-block"><p class="detail-sv">${highlight(item.swedish_definition, query)}</p>${item.english_definition ? `<p class="detail-en">${highlight(item.english_definition, query)}</p>` : ''}</div>`;
                 }
-
-                // --- FIXED [Problem 1]: Only render explanation if it's different from the definition ---
                 const isExplanationDifferent = item.swedish_explanation && (item.swedish_explanation !== item.swedish_definition);
                 if (isExplanationDifferent) {
                     definitionHTML += `<div class="detail-block"><p class="detail-sv">${highlight(item.swedish_explanation, query)}</p>${item.english_explanation ? `<p class="detail-en">${highlight(item.english_explanation, query)}</p>` : ''}</div>`;
@@ -154,27 +156,24 @@ export function renderSearchResults(data, append = false, query = '') {
                 definitionHTML += `</div>`;
             }
 
-            // Section: Examples
             let examplesHTML = '';
             if (item.examples && item.examples.length > 0) {
                 examplesHTML = '<div class="result-details"><h4>Examples</h4>';
                 item.examples.forEach(ex => {
-                    examplesHTML += `<div class="example"><p class="example-sv">”${ex.swedish_sentence}”</p><p class="example-en">”${ex.english_sentence}”</p></div>`;
+                    examplesHTML += `<div class="example"><p class="example-sv">”${highlight(ex.swedish_sentence, query)}”</p><p class="example-en">”${highlight(ex.english_sentence, query)}”</p></div>`;
                 });
                 examplesHTML += '</div>';
             }
             
-            // Section: Idioms
             let idiomsHTML = '';
             if (item.idioms && item.idioms.length > 0) {
                 idiomsHTML = '<div class="result-details"><h4>Related Idioms</h4>';
                 item.idioms.forEach(idiom => {
-                    idiomsHTML += `<div class="idiom"><p class="idiom-sv">”${idiom.swedish_idiom}”</p><p class="idiom-en">”${idiom.english_idiom}”</p></div>`;
+                    idiomsHTML += `<div class="idiom"><p class="idiom-sv">”${highlight(idiom.swedish_idiom, query)}”</p><p class="idiom-en">”${highlight(idiom.english_idiom, query)}”</p></div>`;
                 });
                 idiomsHTML += '</div>';
             }
 
-            // Section: Advanced (collapsible)
             let advancedHTML = '';
             if (item.grammar_notes || item.antonyms) {
                 advancedHTML += `<details class="advanced-details"><summary>Grammar & Related Words</summary>`;
@@ -187,15 +186,16 @@ export function renderSearchResults(data, append = false, query = '') {
                 advancedHTML += `</details>`;
             }
 
-            const isSwedishSearch = item.swedish_word.toLowerCase().includes(query.toLowerCase()) || 
-                                    (item.swedish_lemma && item.swedish_lemma.includes(query.toLowerCase()));
+            const isSwedishSearch = (item.swedish_word.toLowerCase().includes(query.toLowerCase()) || (item.swedish_lemma && item.swedish_lemma.includes(query.toLowerCase())));
 
-            // --- FIXED [Problem 3]: Moved search direction icon into H2 tag ---
+
+            // --- THIS IS THE FINAL, DEFINITIVE FIX ---
+            // We wrap the highlighted word in a <span> to make it a single flex item for the parent H2.
             itemDiv.innerHTML = `
                 <div class="result-item-header flex-between">
                     <div class="word-details">
                         <h2>
-                            ${highlight(item.swedish_word, query)} 
+                            <span class="word-text">${highlight(item.swedish_word, query)}</span>
                             <span class="badge">${item.word_class || 'N/A'}</span>
                             <span class="text-secondary search-direction">${isSwedishSearch ? '🇸🇪→🇬🇧' : '🇬🇧→🇸🇪'}</span>
                         </h2>
@@ -212,7 +212,7 @@ export function renderSearchResults(data, append = false, query = '') {
         });
     }
 
-    // Render results found in examples (this part remains the same)
+    // Render "Found in Examples" (unchanged)
     if (!append && data.examples_found && data.examples_found.length > 0) {
         let examplesSectionHTML = `<h3>Found in Examples</h3>`;
         data.examples_found.forEach(ex => {
@@ -229,14 +229,17 @@ export function renderSearchResults(data, append = false, query = '') {
         container.innerHTML += examplesSectionHTML;
     }
     
-    // Inject styles if they don't exist
+    // Style injection (unchanged)
     if (!document.getElementById('custom-details-style')) {
         const style = document.createElement('style');
         style.id = 'custom-details-style';
-        // --- FIXED [Problem 2]: Combined .example-en and .idiom-en selectors ---
         style.innerHTML = `
             .result-item h2 { font-size: var(--font-size-2xl); margin-bottom: var(--spacing-xs); display: flex; align-items: center; gap: var(--spacing-sm); flex-wrap: wrap; }
             .result-item .badge { font-size: var(--font-size-xs); background-color: var(--secondary-color); color: var(--text-primary); padding: 4px 8px; border-radius: var(--border-radius-pill); font-weight: 600; white-space: nowrap; }
+
+            /* --- ADDED THIS LINE TO HIDE THE ICON --- */
+            .result-item .search-direction { display: none; } 
+
             .result-item .search-direction { font-size: var(--font-size-sm); font-weight: normal; }
             .result-item .translation-def { font-size: var(--font-size-lg); color: var(--text-primary); font-weight: 600; margin: 0; }
             .result-details { margin-top: var(--spacing-md); padding-top: var(--spacing-md); border-top: 1px solid var(--border-color); }
@@ -245,6 +248,13 @@ export function renderSearchResults(data, append = false, query = '') {
             .detail-en, .example-en, .idiom-en { color: var(--text-secondary); font-size: var(--font-size-sm); font-style: italic; }
             .advanced-details { margin-top: var(--spacing-md); }
             .advanced-details summary { cursor: pointer; font-weight: 500; color: var(--primary-color); }
+            /* --- FINAL FIX: Removed horizontal padding --- */
+            .highlight { 
+                background-color: var(--secondary-color); 
+                color: var(--text-primary); 
+                border-radius: 3px; 
+                padding: 0; /* Changed from '0 2px' to '0' */
+            }
         `;
         document.head.appendChild(style);
     }

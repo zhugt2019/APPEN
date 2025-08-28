@@ -10,7 +10,19 @@ import { ConversationPractice } from './conversation-practice.js';
 
 let api;
 let recorder;
+// This variable will track if the initial scenario has been loaded.
+let isInitialScenarioLoaded = false;
 
+// --- THIS IS THE NEW FUNCTION ---
+export async function loadInitialScenario() {
+    // Only load the scenario if it hasn't been loaded before.
+    if (!isInitialScenarioLoaded) {
+        await generateNewScenario('random');
+        isInitialScenarioLoaded = true;
+    }
+}
+
+// --- THIS FUNCTION IS MODIFIED ---
 export async function initConversation() {
     api = new API();
     recorder = new AudioRecorder({
@@ -18,7 +30,8 @@ export async function initConversation() {
         onError: (err) => showToast(err.message || 'Recording failed.')
     });
     setupEventListeners();
-    await generateNewScenario('random');
+    // REMOVED: The following line is now gone from here.
+    // await generateNewScenario('random'); 
 }
 
 function setupEventListeners() {

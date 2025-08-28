@@ -14,15 +14,17 @@ let hasMoreResults = true;  // 标记是否还有更多数据
 
 function setupSearchEventListeners() {
     const searchInput = document.getElementById('searchInput');
-    const searchSection = document.getElementById('search-section'); // 获取滚动容器
+    // --- THIS IS THE FIX ---
+    // The scrolling container is the #search-section element itself.
+    const scrollContainer = document.getElementById('search-section'); 
     
     if (searchInput) {
         searchInput.addEventListener('input', Utils.debounce(handleNewSearch, 300));
     }
     
-    // ADDED: 添加滚动事件监听器
-    if (searchSection) {
-        searchSection.addEventListener('scroll', handleScroll);
+    // Attach the scroll listener to the correct element.
+    if (scrollContainer) {
+        scrollContainer.addEventListener('scroll', handleScroll);
     }
 }
 
