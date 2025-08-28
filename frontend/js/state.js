@@ -1,6 +1,6 @@
 // frontend/js/state.js
 
-// A simple, shared state object for the entire application.
+// A simple, shared state object for a portion of the application.
 export const state = {
     // Auth state
     isLoggedIn: false,
@@ -13,6 +13,9 @@ export const state = {
     messages: [],
     isRecording: false,
     isLoading: false,
+
+    // Target language for dynamic translations. Default to Chinese.
+    targetLanguage: 'zh',
 };
 
 // Initializes state from localStorage.
@@ -21,6 +24,12 @@ export function initState() {
     if (level) {
         state.currentLevel = level;
     }
+    
+    const savedLang = localStorage.getItem('targetLanguage');
+    if (savedLang) {
+        state.targetLanguage = savedLang;
+    }
+
     console.log("Initial state loaded:", state);
 }
 

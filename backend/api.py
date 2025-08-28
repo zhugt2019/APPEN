@@ -29,7 +29,7 @@ from .prompt_managements import pm
 from .main import (
     transcribe_audio_async, generate_response_async, generate_audio_async,
     generate_example_dialogue, generate_review, start_background_tasks,
-    audio_processor, model_manager
+    audio_processor, model_manager, generate_word_report 
 )
 from .audio_processor import concatenate_audios_sync
 
@@ -262,6 +262,28 @@ def remove_from_wordbook(word_id: int, db: Session = Depends(database.get_user_d
     db.commit()
     return None
 
+# --- 添加新的API端点 ---
+@word_router.post("/word-report", response_model=models.WordReportResponse, tags=["Dictionary & Wordbook"])
+async def get_word_report(
+    request: models.WordReportRequest,
+    current_user: User = Depends(auth.get_current_active_user) # 保护端点
+):
+    """
+    Generates a comprehensive, structured report for a Swedish word in a target language.
+    """
+    try:
+        report_data = await generate_word_report(
+            swedish_word=request.swedish_word,
+            word_class=request.word_class,
+            target_language=request.target_language
+        )
+        # SQLAlchemy 模型可以直接从字典创建
+        return models.WordReportResponse(**report_data)
+    except ValueError as e:
+        raise HTTPException(status_code=502, detail=str(e)) # Bad Gateway if LLM fails
+    except Exception as e:
+        logger.error(f"Word report generation failed for '{request.swedish_word}': {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Failed to generate word report.")
 
 # === Original Conversation Practice Endpoints ===
 # CORRECTED: Paths are now relative to the router's prefix

@@ -3,9 +3,11 @@
 import { state } from './state.js';
 import { loadWordbook } from './wordbook.js';
 import { loadInitialScenario } from './conversation.js';
-
+import { api } from './api.js'; // <--- 添加这个导入
 
 export const elements = {};
+
+// --- ADD THIS ENTIRE BLOCK START ---
 
 function cacheElements() {
     elements.levelButtons = document.querySelectorAll('[data-action="select-level"]');
@@ -32,7 +34,74 @@ function cacheElements() {
     elements.navPractice = document.getElementById('nav-practice');
     elements.navSearch = document.getElementById('nav-search');
     elements.allNavLinks = document.querySelectorAll('.nav-link');
+    // ADD THESE TWO LINES AT THE END OF THE FUNCTION
+    elements.menuToggleBtn = document.getElementById('menu-toggle-btn');
+    elements.menuDropdown = document.getElementById('menu-dropdown');
+    
+    // This line was for the language selector, it's safe to keep it here for when you add it.
+    elements.languageSelector = document.getElementById('languageSelector'); 
 }
+
+export function initUI() {
+    cacheElements();
+    elements.levelButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.level === state.currentLevel));
+
+    // --- ADD THIS ENTIRE BLOCK START ---
+    // Event listener for the new menu toggle button
+    if (elements.menuToggleBtn && elements.menuDropdown) {
+        elements.menuToggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevents the window click listener from firing immediately
+            elements.menuDropdown.classList.toggle('active');
+        });
+
+        // Add a listener to the whole window to close the menu when clicking outside
+        window.addEventListener('click', (e) => {
+            if (elements.menuDropdown.classList.contains('active') && !elements.menuDropdown.contains(e.target)) {
+                elements.menuDropdown.classList.remove('active');
+            }
+        });
+    }
+    // --- ADD THIS ENTIRE BLOCK END ---
+
+    // Event listener for language selector (will work when you add the HTML)
+    if (elements.languageSelector) {
+        elements.languageSelector.value = state.targetLanguage;
+        elements.languageSelector.addEventListener('change', (e) => {
+            const newLang = e.target.value;
+            state.targetLanguage = newLang;
+            localStorage.setItem('targetLanguage', newLang);
+            const selectedLanguageName = e.target.options[e.target.selectedIndex].text;
+            showToast(`Translation language set to ${selectedLanguageName}`);
+        });
+    }
+
+    // Navigation event listeners
+    elements.navPractice.addEventListener('click', (e) => {
+        e.preventDefault();
+        showView('practice');
+        loadInitialScenario(); // Load scenario when switching to practice view
+    });
+    elements.navSearch.addEventListener('click', (e) => {
+        e.preventDefault();
+        showView('search');
+    });
+    elements.navWordbook.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (state.isLoggedIn) {
+            loadWordbook();
+        } else {
+            showToast("Please log in to see your wordbook.");
+        }
+    });
+
+    // Delegated event listener for AI report requests
+    const searchResultsContainer = document.getElementById('searchResults');
+    if (searchResultsContainer) {
+        searchResultsContainer.addEventListener('click', handleWordReportRequest);
+    }
+}
+
+// --- ADD THIS ENTIRE BLOCK END ---
 
 // --- ADD a helper function for highlighting at the top of the file or inside renderSearchResults ---
 function highlight(text, term) {
@@ -94,21 +163,130 @@ export function showView(viewName) {
     }
 }
 
-export function initUI() {
-    cacheElements();
-    elements.levelButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.level === state.currentLevel));
+// --- 在 ui.js 文件中新增一个翻译映射对象 ---
+const reportLabels = {
+    'zh': {
+        definition: '定义',
+        partOfSpeech: '词性',
+        inflections: '变位/变格',
+        exampleSentences: '例句',
+        synonyms: '近义词',
+        antonyms: '反义词'
+    },
+    'ko': {
+        definition: '정의',
+        partOfSpeech: '품사',
+        inflections: '변형',
+        exampleSentences: '예문',
+        synonyms: '유의어',
+        antonyms: '반의어'
+    },
+    'ur': { // 乌尔都语，请确认翻译是否准确
+        definition: 'تعریف',
+        partOfSpeech: 'صرف',
+        inflections: 'صرفیاتی تبدیلیاں',
+        exampleSentences: 'مثالی جملے',
+        synonyms: 'مترادفات',
+        antonyms: 'متضاد الفاظ'
+    },
+    'hi': { // 印地语，请确认翻译是否准确
+        definition: 'परिभाषा',
+        partOfSpeech: 'शब्द-भेद',
+        inflections: 'रूप परिवर्तन',
+        exampleSentences: 'उदाहरण वाक्य',
+        synonyms: 'पर्यायवाची',
+        antonyms: 'विलोम शब्द'
+    },
+    'uk': { // 乌克兰语，请确认翻译是否准确
+        definition: 'Визначення',
+        partOfSpeech: 'Частина мови',
+        inflections: 'Відмінювання/Дієвідмінювання',
+        exampleSentences: 'Приклади речень',
+        synonyms: 'Синоніми',
+        antonyms: 'Антоніми'
+    },
+    // Fallback or English if target language not found
+    'default': {
+        definition: 'Definition',
+        partOfSpeech: 'Part of Speech',
+        inflections: 'Inflections',
+        exampleSentences: 'Example Sentences',
+        synonyms: 'Synonyms',
+        antonyms: 'Antonyms'
+    }
+};
 
-    // All navigation event listeners are now centralized here for reliability.
-    // --- MODIFY THIS EVENT LISTENER ---
-    elements.navPractice.addEventListener('click', (e) => { 
-        e.preventDefault(); 
-        showView('practice'); 
-        // Call the new function to load data on demand
-        loadInitialScenario(); 
-    });
-    elements.navSearch.addEventListener('click', (e) => { e.preventDefault(); showView('search'); });
-    // The listener for Wordbook now calls the imported loadWordbook function.
-    elements.navWordbook.addEventListener('click', (e) => { e.preventDefault(); loadWordbook(); });
+// --- REVISED function with safety fallback ---
+async function handleWordReportRequest(event) {
+    const reportBtn = event.target.closest('.btn-get-report');
+    if (!reportBtn) return;
+
+    if (!state.isLoggedIn) {
+        showToast("Please log in to use the AI analysis feature.");
+        return;
+    }
+
+    const word = reportBtn.dataset.word;
+    const wordClass = reportBtn.dataset.class;
+    const id = reportBtn.dataset.id;
+    const container = document.getElementById(`report-container-${id}`);
+
+    if (!container) return;
+
+    if (container.innerHTML !== '' && container.style.display !== 'none') {
+        container.style.display = 'none';
+        reportBtn.classList.remove('active');
+        return;
+    } else if (container.innerHTML !== '') {
+        container.style.display = 'block';
+        reportBtn.classList.add('active');
+        return;
+    }
+    
+    reportBtn.disabled = true;
+    reportBtn.classList.add('active');
+    container.style.display = 'block';
+    container.innerHTML = `<div class="p-2 flex-center gap-2"><span class="spinner"></span><span class="text-secondary">Generating AI report...</span></div>`;
+
+    try {
+        // --- CORE FIX: Add a fallback to ensure targetLanguage is never undefined ---
+        const targetLang = state.targetLanguage || 'zh'; // If state.targetLanguage is faulty, default to 'zh'
+        
+        console.log(`Sending report request for "${word}" with language: "${targetLang}"`);
+
+        const report = await api.getWordReport(word, wordClass, targetLang); // Use the safe variable
+        
+        // --- 获取对应语言的标签 ---
+        const labels = reportLabels[targetLang] || reportLabels['default'];
+        
+        container.innerHTML = `
+            <div class="word-report">
+                <p><strong>${labels.definition}:</strong> ${report.definition}</p>
+                <p><strong>${labels.partOfSpeech}:</strong> ${report.part_of_speech}</p>
+                <p><strong>${labels.inflections}:</strong> ${report.inflections}</p>
+                
+                <h4>${labels.exampleSentences}:</h4>
+                <ul>
+                    ${report.example_sentences.map(s => `<li>${s}</li>`).join('')}
+                </ul>
+                
+                ${report.synonyms && report.synonyms.length > 0 ? `
+                    <h4>${labels.synonyms}:</h4>
+                    <p>${report.synonyms.join(', ')}</p>
+                ` : ''}
+                
+                ${report.antonyms && report.antonyms.length > 0 ? `
+                    <h4>${labels.antonyms}:</h4>
+                    <p>${report.antonyms.join(', ')}</p>
+                ` : ''}
+            </div>
+        `;
+    } catch (error) {
+        container.innerHTML = `<div class="p-2 text-error">Failed to generate report. Details: ${error.message}</div>`;
+        console.error("Word report error:", error);
+    } finally {
+        reportBtn.disabled = false;
+    }
 }
 
 // --- MODIFIED RENDER FUNCTION ---
@@ -143,6 +321,7 @@ export function renderSearchResults(data, append = false, query = '') {
                 addButton = `<button class="btn btn-sm btn-outline btn-add-wordbook" data-word="${item.swedish_word}" data-definition="${item.english_def}">Add</button>`;
             }
             
+            // --- NEW: Logic to build detailed HTML sections ---
             let definitionHTML = '';
             if (item.swedish_definition || item.swedish_explanation) {
                 definitionHTML += `<div class="result-details"><h4>Definition & Explanation</h4>`;
@@ -159,7 +338,7 @@ export function renderSearchResults(data, append = false, query = '') {
             let examplesHTML = '';
             if (item.examples && item.examples.length > 0) {
                 examplesHTML = '<div class="result-details"><h4>Examples</h4>';
-                item.examples.forEach(ex => {
+                item.examples.slice(0, 3).forEach(ex => { // Show up to 3 examples
                     examplesHTML += `<div class="example"><p class="example-sv">”${highlight(ex.swedish_sentence, query)}”</p><p class="example-en">”${highlight(ex.english_sentence, query)}”</p></div>`;
                 });
                 examplesHTML += '</div>';
@@ -186,18 +365,15 @@ export function renderSearchResults(data, append = false, query = '') {
                 advancedHTML += `</details>`;
             }
 
-            const isSwedishSearch = (item.swedish_word.toLowerCase().includes(query.toLowerCase()) || (item.swedish_lemma && item.swedish_lemma.includes(query.toLowerCase())));
+            const buttonText = (reportLabels[state.targetLanguage] || reportLabels['default']).buttonText || 'Explain in my language';
 
-
-            // --- THIS IS THE FINAL, DEFINITIVE FIX ---
-            // We wrap the highlighted word in a <span> to make it a single flex item for the parent H2.
+            // --- REVISED: Complete innerHTML with all sections ---
             itemDiv.innerHTML = `
                 <div class="result-item-header flex-between">
                     <div class="word-details">
                         <h2>
                             <span class="word-text">${highlight(item.swedish_word, query)}</span>
                             <span class="badge">${item.word_class || 'N/A'}</span>
-                            <span class="text-secondary search-direction">${isSwedishSearch ? '🇸🇪→🇬🇧' : '🇬🇧→🇸🇪'}</span>
                         </h2>
                         <p class="translation-def">${highlight(item.english_def, query)}</p>
                     </div>
@@ -207,6 +383,15 @@ export function renderSearchResults(data, append = false, query = '') {
                 ${examplesHTML}
                 ${idiomsHTML}
                 ${advancedHTML}
+                <div class="report-controls mt-2">
+                    <button class="btn btn-sm btn-primary btn-get-report" 
+                            data-word="${item.swedish_word}" 
+                            data-class="${item.word_class || 'Unknown'}" 
+                            data-id="${item.id}">
+                        ${buttonText}
+                    </button>
+                </div>
+                <div class="word-report-container" id="report-container-${item.id}"></div>
             `;
             container.appendChild(itemDiv);
         });
@@ -288,3 +473,4 @@ export function renderWordbookList(entries) {
         container.appendChild(itemDiv);
     });
 }
+

@@ -214,7 +214,39 @@ The full conversation:
 Provide your review in a clear, encouraging, and easy-to-understand format.
 """
 
+WORD_ANALYSIS_PROMPT = """You are an expert Swedish linguist and teacher assisting a language learner.
+Your task is to provide a comprehensive analysis of the Swedish word "{SwedishWord}", which is a "{WordClass}".
+The entire analysis MUST be generated in {TargetLanguage}.
+
+Please provide your response ONLY as a single, valid JSON object with the following exact keys and data types:
+- "definition": (string) A clear and concise definition of the word.
+- "part_of_speech": (string) The part of speech.
+- "inflections": (string) Grammatical inflections. If it's a noun, provide singular indefinite, singular definite, plural indefinite, plural definite forms. If it's a verb, provide present, past (preterite), and supine forms.
+- "example_sentences": (list of strings) Provide two simple example sentences. Each list item should be a single string containing the Swedish sentence, a hyphen, and its translation in {TargetLanguage}.
+- "synonyms": (list of strings) A list of 2-3 common synonyms. If none, provide an empty list.
+- "antonyms": (list of strings) A list of 2-3 common antonyms. If none, provide an empty list.
+
+Example for the verb "äta" (to eat) if the target language were English:
+{
+  "definition": "To put or take food into the mouth, chew it, and swallow it.",
+  "part_of_speech": "Verb",
+  "inflections": "Present: äter, Past: åt, Supine: ätit",
+  "example_sentences": ["Jag äter ett äpple. - I am eating an apple.", "Vi åt middag igår. - We ate dinner yesterday."],
+  "synonyms": ["konsumera", "förtära", "spisa"],
+  "antonyms": ["fasta", "svälta"]
+}
+
+Do not include any text or explanations outside of the JSON object.
+"""
+
 pm = PromptManager()
+
+
+# --- 将新的Prompt添加到管理器中 ---
+pm.add_prompt(
+    name="word_analysis_prompt",
+    template=WORD_ANALYSIS_PROMPT
+)
 
 pm.add_prompt(
     name="random_context",

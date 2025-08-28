@@ -205,10 +205,10 @@ class WordSearchResult(BaseModel):
     swedish_word: str
     word_class: Optional[str] = None
     english_def: str
-    # ADDED: Lemmas can be useful for the frontend later
+    
+    # --- ADDED/MODIFIED START: 添加所有缺失的详细信息字段 ---
     swedish_lemma: Optional[str] = None
     english_lemma: Optional[str] = None
-    # --- ADDED/MODIFIED START: Fields for definition, explanation, and new data ---
     swedish_definition: Optional[str] = None
     english_definition: Optional[str] = None
     swedish_explanation: Optional[str] = None
@@ -216,8 +216,11 @@ class WordSearchResult(BaseModel):
     grammar_notes: Optional[str] = None
     antonyms: Optional[str] = None
     # --- ADDED/MODIFIED END ---
-    idioms: List[Idiom] = []
+    
+    # 确保 examples 和 idioms 字段也存在
     examples: List[Example] = []
+    idioms: List[Idiom] = []
+
     model_config = ConfigDict(from_attributes=True)
 
 class PaginatedWordSearchResult(BaseModel):
@@ -227,3 +230,18 @@ class PaginatedWordSearchResult(BaseModel):
     items: List[WordSearchResult]
     # ADDED: A list for results found in examples
     examples_found: List[ExampleSearchResult] = []
+
+# 用于单词报告功能的请求模型
+class WordReportRequest(BaseModel):
+    swedish_word: str = Field(..., description="The Swedish word to analyze.")
+    word_class: str = Field(..., description="The part of speech of the word (e.g., Noun, Verb).")
+    target_language: str = Field(..., description="The target language code (e.g., 'zh', 'ko').")
+
+# 用于单词报告功能的响应模型 (结构化数据)
+class WordReportResponse(BaseModel):
+    definition: str
+    part_of_speech: str
+    inflections: str
+    example_sentences: List[str]
+    synonyms: Optional[List[str]] = None
+    antonyms: Optional[List[str]] = None

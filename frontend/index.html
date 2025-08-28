@@ -18,17 +18,34 @@
     <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
 </head>
 <body>
-    <div class="app-container">
+<header class="header">
         <header class="header">
             <div class="header-content container">
                 <h1>APPEN</h1>
                 <nav class="main-nav">
-                    <a href="#" id="nav-practice" class="nav-link">Practice</a>
-                    <a href="#" id="nav-search" class="nav-link active">Search</a>
-                    <a href="#" id="nav-wordbook" class="nav-link" style="display: none;">Wordbook</a>
-                    <a href="#" id="nav-login" class="nav-link">Login</a>
-                    <a href="#" id="nav-logout" class="nav-link" style="display: none;">Logout</a>
+                    <button id="menu-toggle-btn" class="btn btn-icon" aria-label="Open menu">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                    </button>
+
+                    <div id="menu-dropdown" class="menu-dropdown">
+                        <div class="language-selector-container">
+                            <span class="language-label">Language:</span>
+                            <select id="languageSelector" class="form-select-sm" aria-label="Select translation language">
+                                <option value="zh">中文</option>
+                                <option value="ko">한국어</option>
+                                <option value="ur">اردو</option>
+                                <option value="hi">हिन्दी</option>
+                                <option value="uk">Українська</option>
+                            </select>
+                        </div>
+                        <a href="#" id="nav-practice" class="nav-link">Practice</a>
+                        <a href="#" id="nav-search" class="nav-link active">Search</a>
+                        <a href="#" id="nav-wordbook" class="nav-link" style="display: none;">Wordbook</a>
+                        <a href="#" id="nav-login" class="nav-link">Login</a>
+                        <a href="#" id="nav-logout" class="nav-link" style="display: none;">Logout</a>
+                    </div>
                 </nav>
+                
             </div>
         </header>
 
@@ -137,6 +154,21 @@
         .fab { position: fixed; bottom: calc(var(--spacing-lg) + var(--safe-area-inset-bottom)); right: var(--spacing-lg); width: 56px; height: 56px; border-radius: 50%; background: var(--primary-color); color: white; border: none; box-shadow: var(--shadow-md); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all var(--transition-base); z-index: var(--z-fixed); }
         .toast { position: fixed; bottom: calc(120px + var(--safe-area-inset-bottom)); left: 50%; transform: translateX(-50%) translateY(100px); background: #323232; color: white; padding: var(--spacing-sm) var(--spacing-lg); border-radius: var(--border-radius-pill); font-size: var(--font-size-sm); opacity: 0; transition: all var(--transition-base); z-index: var(--z-tooltip); white-space: nowrap; max-width: calc(100vw - 48px); }
         .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+        /* ADDED START: Styles for language selector label */
+        .language-selector-container {
+            display: flex; /* 让 label 和 select 保持一行 */
+            align-items: center; /* 垂直居中 */
+            gap: var(--spacing-xs); /* 间距 */
+            border-left: 1px solid var(--border-color);
+            padding-left: var(--spacing-md);
+            margin-left: var(--spacing-sm);
+        }
+        .language-label {
+            font-size: var(--font-size-sm);
+            color: var(--text-secondary);
+            white-space: nowrap; /* 防止换行 */
+        }
+        /* ADDED END */
 
         /* ADDED START: Styles for examples and pagination */
         .result-item {
@@ -178,6 +210,110 @@
             color: var(--text-secondary);
         }
         /* ADDED END */
+        /* === 新增代码：为AI报告容器添加样式 === */
+        .word-report-container {
+            margin-top: var(--spacing-md);
+            overflow: hidden; /* 用于动画 */
+        }
+        .word-report {
+            background: var(--background);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-sm);
+            padding: var(--spacing-md);
+            animation: slide-down 0.4s ease-out;
+        }
+        .word-report h4 {
+            margin-top: var(--spacing-md);
+            margin-bottom: var(--spacing-xs);
+            font-size: var(--font-size-sm);
+            color: var(--primary-color);
+        }
+        .word-report ul {
+            list-style-type: disc;
+            padding-left: var(--spacing-lg);
+        }
+        .word-report li {
+            margin-bottom: var(--spacing-xs);
+        }
+        .btn-get-report.active {
+            background-color: var(--primary-dark);
+            color: white;
+        }
+        /* === START: Add these styles for the new dropdown menu === */
+
+        /* Position the nav container to anchor the dropdown */
+        .main-nav {
+            position: relative;
+        }
+
+        /* Style the dropdown panel */
+        .menu-dropdown {
+            display: none; /* Hidden by default */
+            position: absolute;
+            top: calc(100% + 8px); /* Position below the header */
+            right: 0;
+            background: var(--surface);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-lg);
+            padding: var(--spacing-sm);
+            z-index: var(--z-dropdown);
+            width: 200px; /* Or a width that fits your content */
+            border: 1px solid var(--border-color);
+        }
+
+        /* Show the dropdown when it has the .active class */
+        .menu-dropdown.active {
+            display: block;
+        }
+
+        /* Style the items inside the dropdown for a vertical layout */
+        .menu-dropdown .nav-link,
+        .menu-dropdown .language-selector-container {
+            display: flex;
+            width: 100%;
+            padding: var(--spacing-sm) var(--spacing-md);
+            border-radius: var(--border-radius-sm);
+            border-left: none; /* Overriding old styles */
+            margin-left: 0;
+            padding-left: var(--spacing-md);
+        }
+
+        .menu-dropdown .nav-link:hover {
+            background-color: var(--background);
+        }
+
+        /* Adjust the language selector for the vertical menu */
+        .menu-dropdown .language-selector-container {
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: var(--spacing-sm);
+            padding-bottom: var(--spacing-md);
+        }
+
+        .menu-dropdown .language-label {
+            flex-grow: 1; /* Make the label take up available space */
+        }
+
+        /* Override the active link style for the dropdown */
+        .menu-dropdown .nav-link.active {
+            background-color: rgba(30, 136, 229, 0.1);
+            border-bottom-color: transparent; /* Remove the bottom border */
+            color: var(--primary-color);
+        }
+
+        /* Style the menu button */
+        #menu-toggle-btn {
+            background-color: transparent;
+            border: none;
+            color: var(--text-secondary);
+        }
+
+        #menu-toggle-btn:hover {
+            color: var(--text-primary);
+            background-color: var(--background);
+        }
+
+        /* === END: New dropdown menu styles === */
+
     </style>
     <script type="module">
         document.addEventListener('DOMContentLoaded', () => {

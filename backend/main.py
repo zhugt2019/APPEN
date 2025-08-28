@@ -27,11 +27,15 @@ import torch
 import numpy as np
 from transformers import AutoModelForSpeechSeq2Seq, AutoProcessor, pipeline, VitsModel, AutoTokenizer
 from openai import OpenAI
+from cachetools import TTLCache # 确保导入 TTLCache
 
 # Relative imports from within the project
 from .prompt_managements import pm
 from .models import ChatMessage, MessageRole, format_dialog_for_display
 from .audio_processor import AudioProcessor, concatenate_audios_sync
+
+# --- ADDED START: Word Report Cache and Logic ---
+word_report_cache = TTLCache(maxsize=200, ttl=3600) # Cache reports for 24 hours
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -125,6 +129,57 @@ model_manager = ModelManager()
 audio_processor = AudioProcessor()
 
 # --- Core Business Logic Functions ---
+
+LANGUAGE_NAME_MAP = {
+    "zh": "Chinese (中文)",
+    "ko": "Korean (한국어)",
+    "ur": "Urdu (اردو)",
+    "hi": "Hindi (हिन्दी)",
+    "uk": "Ukrainian (Українська)"
+}
+
+async def generate_word_report(swedish_word: str, word_class: str, target_language: str) -> Dict[str, Any]:
+    """
+    Generates a structured learning report for a Swedish word in a target language.
+    """
+    cache_key = f"report_{swedish_word}_{word_class}_{target_language}"
+    if cache_key in word_report_cache:
+        logger.info(f"Cache HIT for word report: {swedish_word} in {target_language}")
+        return word_report_cache[cache_key]
+
+    logger.info(f"Cache MISS for word report: {swedish_word} in {target_language}. Generating new one.")
+    
+    language_full_name = LANGUAGE_NAME_MAP.get(target_language, target_language.capitalize())
+
+    prompt = pm.get_prompt(
+        name="word_analysis_prompt",
+        variables={
+            "SwedishWord": swedish_word,
+            "WordClass": word_class,
+            "TargetLanguage": language_full_name
+        }
+    )
+
+    # 使用低温以获得更稳定、结构化的输出
+    raw_response, _ = await generate_response_async(
+        scenario_prompt=prompt,
+        chat_history=[],
+        generation_config={"temperature": 0.1, "maxOutputTokens": 1024}
+    )
+
+    try:
+        # 清理并解析LLM返回的JSON字符串
+        # 有时LLM会用 markdown 代码块包裹JSON
+        clean_response = re.sub(r'```json\n(.*?)\n```', r'\1', raw_response, flags=re.DOTALL).strip()
+        report_data = json.loads(clean_response)
+        
+        # 将结果存入缓存
+        word_report_cache[cache_key] = report_data
+        return report_data
+    except (json.JSONDecodeError, TypeError) as e:
+        logger.error(f"Failed to parse JSON response from LLM for word '{swedish_word}': {e}")
+        logger.error(f"LLM Raw Response was: {raw_response}")
+        raise ValueError("The AI returned a response in an invalid format.")
 
 def transcribe_audio(audio_data: bytes, input_format: str = 'webm') -> Tuple[str, float]:
     """

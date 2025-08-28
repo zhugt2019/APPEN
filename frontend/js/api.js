@@ -32,12 +32,22 @@ export class API {
                 return text;
             }
         }
+        // --- MODIFIED ERROR HANDLING START ---
         let errorMessage = `API Error: ${response.status}`;
         try {
             const errorData = await response.json();
-            errorMessage = errorData.detail || errorMessage;
-        } catch (error) {}
+            if (errorData.detail) {
+                // FastAPI's validation errors are often an array of objects.
+                // We'll stringify them for a readable error message.
+                errorMessage = typeof errorData.detail === 'string' 
+                    ? errorData.detail 
+                    : JSON.stringify(errorData.detail);
+            }
+        } catch (error) {
+            // If the error response is not JSON, use the default message.
+        }
         throw new Error(errorMessage);
+        // --- MODIFIED ERROR HANDLING END ---
     }
     
     // Generic request function
@@ -137,4 +147,19 @@ export class API {
             body: JSON.stringify({ level, situation: scenario })
         });
     }
+
+    async getWordReport(word, wordClass, targetLanguage) {
+        return this._request('/api/word-report', {
+            method: 'POST',
+            headers: this._getHeaders(),
+            body: JSON.stringify({
+                swedish_word: word,
+                word_class: wordClass,
+                target_language: targetLanguage
+            })
+        });
+    }
 }
+
+// Create and export a single, shared instance of the API class.
+export const api = new API();
