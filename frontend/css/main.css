@@ -519,3 +519,78 @@ a:hover {
 .example-dialog-content strong {
     font-weight: 600;
 }
+
+/* === START: Add these styles for the new dropdown menu === */
+
+/* Position the nav container to anchor the dropdown */
+.main-nav {
+    position: relative;
+}
+
+/* Style the dropdown panel */
+.menu-dropdown {
+    display: none; /* Add this line to hide the dropdown by default */
+    position: absolute;
+    top: calc(100% + 8px); /* Position below the header */
+    right: 0;
+    background: var(--surface);
+    border-radius: var(--border-radius);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-sm);
+    z-index: var(--z-dropdown);
+    width: 200px; /* Or a width that fits your content */
+    border: 1px solid var(--border-color);
+}
+
+/* Show the dropdown when it has the .active class */
+.menu-dropdown.active {
+    display: block;
+}
+
+/* Style the items inside the dropdown for a vertical layout */
+.menu-dropdown .nav-link,
+.menu-dropdown .language-selector-container {
+    display: flex;
+    width: 100%;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--border-radius-sm);
+    border-left: none; /* Overriding old styles */
+    margin-left: 0;
+    padding-left: var(--spacing-md);
+}
+
+.menu-dropdown .nav-link:hover {
+    background-color: var(--background);
+}
+
+/* Adjust the language selector for the vertical menu */
+.menu-dropdown .language-selector-container {
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-md);
+}
+
+.menu-dropdown .language-label {
+    flex-grow: 1; /* Make the label take up available space */
+}
+
+/* Override the active link style for the dropdown */
+.menu-dropdown .nav-link.active {
+    background-color: rgba(30, 136, 229, 0.1);
+    border-bottom-color: transparent; /* Remove the bottom border */
+    color: var(--primary-color);
+}
+
+/* Style the menu button */
+#menu-toggle-btn {
+    background-color: transparent;
+    border: none;
+    color: var(--text-secondary);
+}
+
+#menu-toggle-btn:hover {
+    color: var(--text-primary);
+    background-color: var(--background);
+}
+
+/* === END: New dropdown menu styles === */

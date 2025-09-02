@@ -3,7 +3,8 @@
 import { state } from './state.js';
 import { loadWordbook } from './wordbook.js';
 import { loadInitialScenario } from './conversation.js';
-import { api } from './api.js'; // <--- 添加这个导入
+import { api } from './api.js';
+import { updateAuthModalUI, logout, setAuthMode } from './auth.js';
 
 export const elements = {};
 
@@ -15,7 +16,6 @@ function cacheElements() {
     elements.chatContainer = document.getElementById('chatContainer');
     elements.recordButton = document.getElementById('recordButton');
     elements.recordingInterface = document.getElementById('recordingInterface');
-    elements.fabRecord = document.getElementById('fabRecord');
     elements.toast = document.getElementById('toast');
     elements.randomScenarioBtn = document.getElementById('randomScenarioBtn');
     elements.customScenarioBtn = document.getElementById('customScenarioBtn');
@@ -34,76 +34,104 @@ function cacheElements() {
     elements.navPractice = document.getElementById('nav-practice');
     elements.navSearch = document.getElementById('nav-search');
     elements.allNavLinks = document.querySelectorAll('.nav-link');
-    // ADD THESE TWO LINES AT THE END OF THE FUNCTION
     elements.menuToggleBtn = document.getElementById('menu-toggle-btn');
     elements.menuDropdown = document.getElementById('menu-dropdown');
-    
-    // This line was for the language selector, it's safe to keep it here for when you add it.
-    elements.languageSelector = document.getElementById('languageSelector'); 
+    elements.languageSelectors = document.querySelectorAll('.language-selector');
 }
+
+// frontend/js/ui.js
+
+// ... (文件顶部导入代码) ...
 
 export function initUI() {
     cacheElements();
-    elements.levelButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.level === state.currentLevel));
 
-    // --- ADD THIS ENTIRE BLOCK START ---
-    // Event listener for the new menu toggle button
+    // 导航事件监听器
+    // 桌面端和移动端导航共享同一个事件处理函数
+    const handleNavClick = (e) => {
+        e.preventDefault();
+        const navId = e.target.id;
+        if (navId.includes('practice')) {
+            showView('practice');
+            loadInitialScenario();
+        } else if (navId.includes('search')) {
+            showView('search');
+        } else if (navId.includes('wordbook')) {
+            if (state.isLoggedIn) {
+                loadWordbook();
+            } else {
+                showToast("Please log in to see your wordbook.");
+            }
+        } else if (navId.includes('login')) {
+            setAuthMode(true); // <--- 使用新的函数来设置模式
+            updateAuthModalUI();
+            showModal('login-modal');
+        } else if (navId.includes('logout')) {
+            logout();
+        }
+    };
+    
+    // 为所有导航链接添加事件监听器
+    if (elements.allNavLinks) {
+        elements.allNavLinks.forEach(link => {
+            link.addEventListener('click', handleNavClick);
+        });
+    }
+
+    // 菜单切换按钮
     if (elements.menuToggleBtn && elements.menuDropdown) {
         elements.menuToggleBtn.addEventListener('click', (e) => {
-            e.stopPropagation(); // Prevents the window click listener from firing immediately
+            e.stopPropagation();
             elements.menuDropdown.classList.toggle('active');
         });
-
-        // Add a listener to the whole window to close the menu when clicking outside
         window.addEventListener('click', (e) => {
-            if (elements.menuDropdown.classList.contains('active') && !elements.menuDropdown.contains(e.target)) {
+            if (elements.menuDropdown.classList.contains('active') && !elements.menuDropdown.contains(e.target) && !elements.menuToggleBtn.contains(e.target)) {
                 elements.menuDropdown.classList.remove('active');
             }
         });
     }
-    // --- ADD THIS ENTIRE BLOCK END ---
 
-    // Event listener for language selector (will work when you add the HTML)
-    if (elements.languageSelector) {
-        elements.languageSelector.value = state.targetLanguage;
-        elements.languageSelector.addEventListener('change', (e) => {
+    // 语言选择器
+    if (elements.languageSelectors) {
+        // 当任何一个选择器发生变化时
+        const handleLanguageChange = (e) => {
             const newLang = e.target.value;
+            
+            // 1. 更新全局状态和本地存储
             state.targetLanguage = newLang;
             localStorage.setItem('targetLanguage', newLang);
+
+            // 2. 同步所有其他选择器的值
+            elements.languageSelectors.forEach(selector => {
+                if (selector !== e.target) {
+                    selector.value = newLang;
+                }
+            });
+
+            // 3. 显示提示
             const selectedLanguageName = e.target.options[e.target.selectedIndex].text;
             showToast(`Translation language set to ${selectedLanguageName}`);
+        };
+
+        // 为所有选择器设置初始值并绑定事件
+        elements.languageSelectors.forEach(selector => {
+            selector.value = state.targetLanguage;
+            selector.addEventListener('change', handleLanguageChange);
         });
     }
-
-    // Navigation event listeners
-    elements.navPractice.addEventListener('click', (e) => {
-        e.preventDefault();
-        showView('practice');
-        loadInitialScenario(); // Load scenario when switching to practice view
-    });
-    elements.navSearch.addEventListener('click', (e) => {
-        e.preventDefault();
-        showView('search');
-    });
-    elements.navWordbook.addEventListener('click', (e) => {
-        e.preventDefault();
-        if (state.isLoggedIn) {
-            loadWordbook();
-        } else {
-            showToast("Please log in to see your wordbook.");
-        }
-    });
-
-    // Delegated event listener for AI report requests
+    
+    // 搜索结果中的 AI 报告按钮
     const searchResultsContainer = document.getElementById('searchResults');
     if (searchResultsContainer) {
         searchResultsContainer.addEventListener('click', handleWordReportRequest);
     }
+    
+    // 统一更新登录/登出按钮的显示
+    updateNavbar();
 }
 
 // --- ADD THIS ENTIRE BLOCK END ---
 
-// --- ADD a helper function for highlighting at the top of the file or inside renderSearchResults ---
 function highlight(text, term) {
     if (!term || !text) {
         return text;
@@ -113,16 +141,14 @@ function highlight(text, term) {
 }
 
 export function updateNavbar() {
-    if (!elements.navLogin) return;
-    if (state.isLoggedIn) {
-        elements.navLogin.style.display = 'none';
-        elements.navLogout.style.display = 'block';
-        elements.navWordbook.style.display = 'block';
-    } else {
-        elements.navLogin.style.display = 'block';
-        elements.navLogout.style.display = 'none';
-        elements.navWordbook.style.display = 'none';
-    }
+    // 统一处理移动端和桌面端的登录/登出按钮
+    const loginLinks = document.querySelectorAll('[id^="nav-login"]');
+    const logoutLinks = document.querySelectorAll('[id^="nav-logout"]');
+    const wordbookLinks = document.querySelectorAll('[id^="nav-wordbook"]');
+
+    loginLinks.forEach(link => link.style.display = state.isLoggedIn ? 'none' : 'block');
+    logoutLinks.forEach(link => link.style.display = state.isLoggedIn ? 'block' : 'none');
+    wordbookLinks.forEach(link => link.style.display = state.isLoggedIn ? 'block' : 'none');
 }
 
 let toastTimer;
@@ -149,17 +175,18 @@ export function showView(viewName) {
     if (elements.searchSection) elements.searchSection.style.display = 'none';
     if (elements.wordbookSection) elements.wordbookSection.style.display = 'none';
 
+    // 统一为所有导航链接移除 active 类
     elements.allNavLinks.forEach(link => link.classList.remove('active'));
+
+    const activeLinks = document.querySelectorAll(`[id^="nav-${viewName}"]`);
+    activeLinks.forEach(link => link.classList.add('active'));
 
     if (viewName === 'practice' && elements.practiceSection) {
         elements.practiceSection.style.display = 'block';
-        elements.navPractice.classList.add('active');
     } else if (viewName === 'search' && elements.searchSection) {
         elements.searchSection.style.display = 'block';
-        elements.navSearch.classList.add('active');
     } else if (viewName === 'wordbook' && elements.wordbookSection) {
         elements.wordbookSection.style.display = 'block';
-        elements.navWordbook.classList.add('active');
     }
 }
 
@@ -369,30 +396,30 @@ export function renderSearchResults(data, append = false, query = '') {
 
             // --- REVISED: Complete innerHTML with all sections ---
             itemDiv.innerHTML = `
-                <div class="result-item-header flex-between">
-                    <div class="word-details">
-                        <h2>
-                            <span class="word-text">${highlight(item.swedish_word, query)}</span>
-                            <span class="badge">${item.word_class || 'N/A'}</span>
-                        </h2>
-                        <p class="translation-def">${highlight(item.english_def, query)}</p>
+                    <div class="result-item-header flex-between">
+                        <div class="word-details">
+                            <h2>
+                                <span class="word-text">${highlight(item.swedish_word, query)}</span>
+                                <span class="badge">${item.word_class || 'N/A'}</span>
+                            </h2>
+                            <p class="translation-def">${highlight(item.english_def, query)}</p>
+                        </div>
+                        ${addButton}
                     </div>
-                    ${addButton}
-                </div>
-                ${definitionHTML}
-                ${examplesHTML}
-                ${idiomsHTML}
-                ${advancedHTML}
-                <div class="report-controls mt-2">
-                    <button class="btn btn-sm btn-primary btn-get-report" 
-                            data-word="${item.swedish_word}" 
-                            data-class="${item.word_class || 'Unknown'}" 
-                            data-id="${item.id}">
-                        ${buttonText}
-                    </button>
-                </div>
-                <div class="word-report-container" id="report-container-${item.id}"></div>
-            `;
+                    ${definitionHTML}
+                    ${examplesHTML}
+                    ${idiomsHTML}
+                    ${advancedHTML}
+                    <div class="report-controls mt-2">
+                        <button class="btn btn-sm btn-primary btn-get-report" 
+                                data-word="${item.swedish_word}" 
+                                data-class="${item.word_class || 'Unknown'}" 
+                                data-id="${item.id}">
+                            Explain in my language
+                        </button>
+                    </div>
+                    <div class="word-report-container" id="report-container-${item.id}"></div>
+                `;
             container.appendChild(itemDiv);
         });
     }

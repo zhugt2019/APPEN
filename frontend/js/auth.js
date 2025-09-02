@@ -1,42 +1,31 @@
-// frontend/js/auth.js (FINAL CORRECTED VERSION)
+// frontend/js/auth.js (CLEANED VERSION)
 
 import { state, setAuthState } from './state.js';
 import { updateNavbar, showToast, closeModal, showModal, elements, showView } from './ui.js';
 import { API } from './api.js';
 
 const api = new API();
-let isLoginMode = true;
+export let isLoginMode = true;
 
-// This function sets up all event listeners related to authentication.
+// --- 新增这个导出的函数 ---
+export function setAuthMode(isLogin) {
+    isLoginMode = isLogin;
+}
+
+// This function now only sets up the form-related listeners.
 function setupAuthEventListeners() {
-    // It's possible for elements to not be cached yet if this runs too early.
-    // We ensure elements are available before adding listeners.
-    if (!elements.navLogin) {
-        // If elements aren't ready, wait a moment and try again.
-        setTimeout(setupAuthEventListeners, 50);
-        return;
-    }
-
     const form = document.getElementById('auth-form');
     const switchModeBtn = document.getElementById('auth-mode-switch');
     
     if (form) form.addEventListener('submit', handleAuthSubmit);
     if (switchModeBtn) switchModeBtn.addEventListener('click', toggleAuthMode);
-
-    elements.navLogin.addEventListener('click', (e) => {
-        e.preventDefault();
-        isLoginMode = true;
-        updateAuthModalUI();
-        showModal('login-modal');
-    });
-
-    elements.navLogout.addEventListener('click', (e) => {
-        e.preventDefault();
-        logout();
-    });
+    
+    // REMOVE these listeners as they are now handled by ui.js
+    // elements.navLogin.addEventListener('click', ...);
+    // elements.navLogout.addEventListener('click', ...);
 }
 
-function updateAuthModalUI() {
+export function updateAuthModalUI() {
     const title = document.getElementById('modal-title');
     const submitBtn = document.getElementById('auth-submit-btn');
     const switchBtn = document.getElementById('auth-mode-switch');
@@ -93,7 +82,6 @@ async function handleAuthSubmit(event) {
         errorMsg.style.display = 'block';
     } finally {
         submitBtn.disabled = false;
-        // update the button text based on the current mode
         if (isLoginMode) {
             submitBtn.textContent = 'Login';
         } else {
@@ -118,9 +106,12 @@ export function logout() {
     showView('practice');
 }
 
-// This ensures event listeners are set up after the main UI script has cached the elements.
-// document.addEventListener('DOMContentLoaded', setupAuthEventListeners);
-
 export function initAuth() {
     setupAuthEventListeners();
+    const closeBtn = document.getElementById('close-login-modal');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            closeModal('login-modal');
+        });
+    }
 }

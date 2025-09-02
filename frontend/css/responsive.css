@@ -2,6 +2,15 @@
 
 /* Mobile First Approach - Base styles are for mobile */
 
+/* Hide desktop navigation and show mobile menu button by default */
+.main-nav-desktop {
+    display: none;
+}
+
+#menu-toggle-btn {
+    display: block;
+}
+
 /* Small devices (landscape phones, 576px and up) */
 @media (min-width: 576px) {
     .container {
@@ -27,12 +36,21 @@
         max-width: 720px;
     }
     
-    .hide-md {
+    /* Hide the mobile menu toggle button on medium devices and up */
+    #menu-toggle-btn {
         display: none;
     }
     
-    .show-md {
-        display: block;
+    /* Hide the mobile dropdown menu on medium devices and up */
+    #menu-dropdown {
+        display: none !important; /* Force hide to override other styles */
+    }
+    
+    /* Show the desktop navigation on medium devices and up */
+    .main-nav-desktop {
+        display: flex; /* Use flexbox for horizontal alignment */
+        align-items: center;
+        gap: var(--spacing-md);
     }
     
     .grid-md-2 {

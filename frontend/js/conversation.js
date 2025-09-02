@@ -40,7 +40,6 @@ function setupEventListeners() {
     elements.customScenarioBtn.addEventListener('click', showCustomScenarioModal);
     elements.customScenarioGenerateBtn.addEventListener('click', generateCustomScenario);
     elements.customScenarioCancelBtn.addEventListener('click', () => closeModal('customScenarioModal'));
-    elements.fabRecord.addEventListener('click', showRecordingInterface);
     elements.recordButton.addEventListener('mousedown', startRecording);
     elements.recordButton.addEventListener('mouseup', stopRecording);
     elements.recordButton.addEventListener('mouseleave', stopRecording);

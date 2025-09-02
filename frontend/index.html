@@ -19,89 +19,115 @@
 </head>
 <body>
 <header class="header">
-        <header class="header">
-            <div class="header-content container">
-                <h1>APPEN</h1>
-                <nav class="main-nav">
-                    <button id="menu-toggle-btn" class="btn btn-icon" aria-label="Open menu">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                    </button>
-
-                    <div id="menu-dropdown" class="menu-dropdown">
-                        <div class="language-selector-container">
-                            <span class="language-label">Language:</span>
-                            <select id="languageSelector" class="form-select-sm" aria-label="Select translation language">
-                                <option value="zh">中文</option>
-                                <option value="ko">한국어</option>
-                                <option value="ur">اردو</option>
-                                <option value="hi">हिन्दी</option>
-                                <option value="uk">Українська</option>
-                            </select>
-                        </div>
-                        <a href="#" id="nav-practice" class="nav-link">Practice</a>
-                        <a href="#" id="nav-search" class="nav-link active">Search</a>
-                        <a href="#" id="nav-wordbook" class="nav-link" style="display: none;">Wordbook</a>
-                        <a href="#" id="nav-login" class="nav-link">Login</a>
-                        <a href="#" id="nav-logout" class="nav-link" style="display: none;">Logout</a>
+        <div class="header-content container">
+            <h1>APPEN</h1>
+            <nav class="main-nav">
+                <button id="menu-toggle-btn" class="btn btn-icon hide-md" aria-label="Open menu">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                </button>
+                <div id="menu-dropdown" class="menu-dropdown hide-md">
+                    <div class="language-selector-container">
+                        <span class="language-label">Language:</span>
+                        <select id="languageSelector" class="form-select-sm language-selector" aria-label="Select translation language">
+                            <option value="zh">中文</option>
+                            <option value="ko">한국어</option>
+                            <option value="ur">اردو</option>
+                            <option value="hi">हिन्दी</option>
+                            <option value="uk">Українська</option>
+                        </select>
                     </div>
-                </nav>
+                    <a href="#" id="nav-practice" class="nav-link">Practice</a>
+                    <a href="#" id="nav-search" class="nav-link active">Search</a>
+                    <a href="#" id="nav-wordbook" class="nav-link" style="display: none;">Wordbook</a>
+                    <a href="#" id="nav-login" class="nav-link">Login</a>
+                    <a href="#" id="nav-logout" class="nav-link" style="display: none;">Logout</a>
+                </div>
+
+                <div class="main-nav-desktop show-md">
+                    <a href="#" id="nav-practice-desktop" class="nav-link">Practice</a>
+                    <a href="#" id="nav-search-desktop" class="nav-link active">Search</a>
+                    <a href="#" id="nav-wordbook-desktop" class="nav-link" style="display: none;">Wordbook</a>
+                    <a href="#" id="nav-login-desktop" class="nav-link">Login</a>
+                    <a href="#" id="nav-logout-desktop" class="nav-link" style="display: none;">Logout</a>
+                    <div class="language-selector-container">
+                        <span class="language-label">Language:</span>
+                        <select id="languageSelector-desktop" class="form-select-sm language-selector" aria-label="Select translation language">
+                            <option value="zh">中文</option>
+                            <option value="ko">한국어</option>
+                            <option value="ur">اردو</option>
+                            <option value="hi">हिन्दी</option>
+                            <option value="uk">Українська</option>
+                        </select>
+                    </div>
+                </div>
+            </nav>
+            
+        </div>
+    </header>
+
+    <main class="main-content" id="practice-section" style="display: none;">
+        <div class="container">
+            <section class="card mb-3" style="padding: var(--spacing-md);">
+                <div class="level-selector-compact">
+                    <button class="level-button" data-action="select-level" data-level="A1"><h3>A1</h3><p class="text-secondary">Beginner</p></button>
+                    <button class="level-button active" data-action="select-level" data-level="A2"><h3>A2</h3><p class="text-secondary">Elementary</p></button>
+                    <button class="level-button" data-action="select-level" data-level="B1"><h3>B1</h3><p class="text-secondary">Intermediate</p></button>
+                    <button class="level-button" data-action="select-level" data-level="B2"><h3>B2</h3><p class="text-secondary">Upper-Int</p></button>
+                </div>
+            </section>
+            <section class="card scenario-card mb-3">
+                <div class="scenario-content">
+                    <div id="scenarioText" class="scenario-text mb-3">Loading scenario...</div>
+                    <div class="scenario-actions flex">
+                        <button id="randomScenarioBtn" class="btn btn-secondary"><span>Random</span></button>
+                        <button id="customScenarioBtn" class="btn btn-secondary"><span>Custom</span></button>
+                    </div>
+                </div>
+            </section>
+            <section class="card p-2 mb-3">
+                 <button id="exampleDialogBtn" class="btn btn-outline btn-block"><span>View Example Dialogue</span></button>
+            </section>
+            <section id="chatContainer" class="chat-container"></section>
+        </div>
+    </main>
+
+    <section id="search-section" class="main-content">
+        <div class="container">
+            <div class="card">
+                <h2 class="card-header">Word Lookup</h2>
+                <div class="form-group">
+                    <input type="search" id="searchInput" class="form-input" placeholder="Search for a Swedish word...">
+                </div>
+                <div id="searchResults" class="search-results"></div>
                 
+                <div id="paginationControls" class="pagination-controls"></div>
+                </div>
+        </div>
+    </section>
+
+    <section id="wordbook-section" class="main-content" style="display: none;">
+        <div class="container">
+            <div class="card"><h2 class="card-header">My Wordbook</h2><div id="wordbookList" class="wordbook-list"></div></div>
+        </div>
+    </section>
+    
+    <div id="recordingInterface" class="recording-interface"><div class="recording-status text-center mb-2"><span id="recordingStatusText">Tap and hold to speak</span><span id="recordingTime" class="recording-time hidden">0:00</span></div><div id="audioVisualizer" class="audio-visualizer hidden"></div><div class="record-button-container flex-center mb-3"><button id="recordButton" class="record-button"><div class="record-icon"></div></button></div><p class="text-center text-secondary">Release to send your message</p></div>
+    <div id="login-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="flex-between">
+                <h2 id="modal-title">Login</h2>
+                <button id="close-login-modal" class="btn btn-icon btn-ghost" aria-label="Close modal">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
             </div>
-        </header>
-
-        <main class="main-content" id="practice-section" style="display: none;">
-            <div class="container">
-                <section class="card mb-3" style="padding: var(--spacing-md);">
-                    <div class="level-selector-compact">
-                        <button class="level-button" data-action="select-level" data-level="A1"><h3>A1</h3><p class="text-secondary">Beginner</p></button>
-                        <button class="level-button active" data-action="select-level" data-level="A2"><h3>A2</h3><p class="text-secondary">Elementary</p></button>
-                        <button class="level-button" data-action="select-level" data-level="B1"><h3>B1</h3><p class="text-secondary">Intermediate</p></button>
-                        <button class="level-button" data-action="select-level" data-level="B2"><h3>B2</h3><p class="text-secondary">Upper-Int</p></button>
-                    </div>
-                </section>
-                <section class="card scenario-card mb-3">
-                    <div class="scenario-content">
-                        <div id="scenarioText" class="scenario-text mb-3">Loading scenario...</div>
-                        <div class="scenario-actions flex">
-                            <button id="randomScenarioBtn" class="btn btn-secondary"><span>Random</span></button>
-                            <button id="customScenarioBtn" class="btn btn-secondary"><span>Custom</span></button>
-                        </div>
-                    </div>
-                </section>
-                <section class="card p-2 mb-3">
-                     <button id="exampleDialogBtn" class="btn btn-outline btn-block"><span>View Example Dialogue</span></button>
-                </section>
-                <section id="chatContainer" class="chat-container"></section>
-            </div>
-        </main>
-
-        <section id="search-section" class="main-content">
-            <div class="container">
-                <div class="card">
-                    <h2 class="card-header">Word Lookup</h2>
-                    <div class="form-group">
-                        <input type="search" id="searchInput" class="form-input" placeholder="Search for a Swedish word...">
-                    </div>
-                    <div id="searchResults" class="search-results"></div>
-                    
-                    <div id="paginationControls" class="pagination-controls"></div>
-                    </div>
-            </div>
-        </section>
-
-        <section id="wordbook-section" class="main-content" style="display: none;">
-            <div class="container">
-                <div class="card"><h2 class="card-header">My Wordbook</h2><div id="wordbookList" class="wordbook-list"></div></div>
-            </div>
-        </section>
-
-        <button id="fabRecord" class="fab" aria-label="Start recording"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="23"></line><line x1="8" y1="23" x2="16" y2="23"></line></svg></button>
-
-        <div id="recordingInterface" class="recording-interface"><div class="recording-status text-center mb-2"><span id="recordingStatusText">Tap and hold to speak</span><span id="recordingTime" class="recording-time hidden">0:00</span></div><div id="audioVisualizer" class="audio-visualizer hidden"></div><div class="record-button-container flex-center mb-3"><button id="recordButton" class="record-button"><div class="record-icon"></div></button></div><p class="text-center text-secondary">Release to send your message</p></div>
-        <div id="login-modal" class="modal-overlay"><div class="modal"><h2 id="modal-title">Login</h2><form id="auth-form"><div id="error-message" class="alert alert-error" style="display: none;"></div><div class="form-group"><label for="username" class="form-label">Username</label><input type="text" id="username" class="form-input" required></div><div class="form-group"><label for="password" class="form-label">Password</label><input type="password" id="password" class="form-input" required></div><div class="modal-actions"><button type="button" id="auth-mode-switch" class="btn btn-ghost">Need an account? Register</button><button type="submit" id="auth-submit-btn" class="btn btn-primary">Login</button></div></form></div></div>
-        <div id="customScenarioModal" class="modal-overlay"><div class="modal"><h2>Create Custom Scenario</h2><p>Describe a situation you'd like to practice:</p><div class="form-group"><input type="text" id="customScenarioInput" class="form-input" placeholder="e.g., ordering coffee at a café"></div><div class="modal-actions"><button id="customScenarioCancel" class="btn btn-outline">Cancel</button><button id="customScenarioGenerate" class="btn btn-primary">Generate</button></div></div></div>
-        <div id="toast" class="toast"></div>
+            <form id="auth-form"><div id="error-message" class="alert alert-error" style="display: none;"></div><div class="form-group"><label for="username" class="form-label">Username</label><input type="text" id="username" class="form-input" required></div><div class="form-group"><label for="password" class="form-label">Password</label><input type="password" id="password" class="form-input" required></div><div class="modal-actions"><button type="button" id="auth-mode-switch" class="btn btn-ghost">Need an account? Register</button><button type="submit" id="auth-submit-btn" class="btn btn-primary">Login</button></div></form>
+        </div>
     </div>
+    <div id="customScenarioModal" class="modal-overlay"><div class="modal"><h2>Create Custom Scenario</h2><p>Describe a situation you'd like to practice:</p><div class="form-group"><input type="text" id="customScenarioInput" class="form-input" placeholder="e.g., ordering coffee at a café"></div><div class="modal-actions"><button id="customScenarioCancel" class="btn btn-outline">Cancel</button><button id="customScenarioGenerate" class="btn btn-primary">Generate</button></div></div></div>
+    <div id="toast" class="toast"></div>
 
     <style>
         .main-nav { display: flex; gap: var(--spacing-md); }
